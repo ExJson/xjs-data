@@ -1,0 +1,137 @@
+
+plugins {
+    id 'maven-publish'
+    id 'signing'
+}
+
+apply plugin: 'java'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
+
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.8.1'
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: '5.8.1'
+    testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.8s.1'
+
+    testImplementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
+    testImplementation group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.33'
+    testImplementation group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.33'
+
+    testAnnotationProcessor group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.33'
+}
+
+compileJava {
+    sourceCompatibility = 16
+}
+
+compileTestJava {
+    sourceCompatibility = 16
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+    test {
+        java {
+            srcDir 'src/test/java'
+        }
+    }
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier 'javadoc'
+    from 'build/docs/javadoc'
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    duplicatesStrategy 'include'
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+    ignoreFailures = false
+    failFast = false
+}
+
+jar {
+    manifest {
+        attributes(
+            'XJS-Version': archiveVersion,
+        )
+    }
+}
+
+javadoc {
+    options.tags = [ 'apiNote:a:API note' ]
+}
+
+artifacts {
+    archives jar
+    archives javadocJar
+    archives sourcesJar
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+publishing {
+    repositories {
+        maven {
+            name = 'OSSRH'
+            url = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+            credentials {
+                username = project.findProperty('ossrh.username') ?: System.getenv('OSSRH_USERNAME')
+                password = project.findProperty('ossrh.password') ?: System.getenv('OSSRH_PASSWORD')
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = group
+            artifactId = pom_artifact_id
+            version = version
+
+            pom {
+                name = pom_name
+                description = pom_description
+                url = pom_url
+                licenses {
+                    license {
+                        name = pom_license_name
+                        url = pom_license_url
+                    }
+                }
+                developers {
+                    developer {
+                        id = pom_developer
+                        name = pom_developer_name
+                        email = pom_developer_email
+                    }
+                }
+                scm {
+                    connection = pom_scm_connection
+                    developerConnection = pom_scm_developer_connection
+                    url = pom_scm_url
+                }
+            }
+
+            from components.java
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.mavenJava
+}
