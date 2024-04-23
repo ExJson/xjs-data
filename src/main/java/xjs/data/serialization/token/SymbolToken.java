@@ -97,8 +97,7 @@ public class SymbolToken extends Token {
     public boolean equals(final Object other) {
         if (this == other) {
             return true;
-        } else if (other instanceof SymbolToken) {
-            final SymbolToken st = (SymbolToken) other;
+        } else if (other instanceof SymbolToken st) {
             return this.symbol == st.symbol && this.spanEquals(st);
         }
         return false;

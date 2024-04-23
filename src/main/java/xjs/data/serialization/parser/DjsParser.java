@@ -8,12 +8,12 @@ import xjs.data.JsonLiteral;
 import xjs.data.JsonObject;
 import xjs.data.JsonString;
 import xjs.data.JsonValue;
-import xjs.data.serialization.token.ContainerToken;
+import xjs.data.serialization.token.DjsTokenizer;
 import xjs.data.serialization.token.NumberToken;
 import xjs.data.serialization.token.StringToken;
 import xjs.data.serialization.token.Token;
+import xjs.data.serialization.token.TokenStream;
 import xjs.data.serialization.token.TokenType;
-import xjs.data.serialization.token.Tokenizer;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,7 +32,7 @@ public class DjsParser extends CommentedTokenParser {
      * @throws IOException If an error occurs when reading the file.
      */
     public DjsParser(final File file) throws IOException {
-        this(Tokenizer.containerize(new FileInputStream(file)));
+        this(DjsTokenizer.containerize(new FileInputStream(file)));
     }
 
     /**
@@ -41,7 +41,7 @@ public class DjsParser extends CommentedTokenParser {
      * @param text The JSON text in DJS format.
      */
     public DjsParser(final String text) {
-        this(Tokenizer.containerize(text));
+        this(DjsTokenizer.containerize(text));
     }
 
     /**
@@ -49,14 +49,13 @@ public class DjsParser extends CommentedTokenParser {
      *
      * @param root The root token container.
      */
-    public DjsParser(final ContainerToken root) {
+    public DjsParser(final TokenStream root) {
         super(root);
     }
 
     @Override
     public @NotNull JsonValue parse() {
-        final ContainerToken rootContainer = (ContainerToken) this.root;
-        if (rootContainer.lookup(':', false) != null) {
+        if (this.root.lookup(':', false) != null) {
             return this.readOpenRoot();
         }
         return this.readClosedRoot();
@@ -80,6 +79,9 @@ public class DjsParser extends CommentedTokenParser {
     protected JsonValue readClosedRoot() {
         if (this.current.type() == TokenType.OPEN) {
             this.read();
+            if (this.current == EMPTY_VALUE) {
+                throw this.unexpected("end of file");
+            }
         }
         this.readAbove();
         final JsonValue result = this.readValue();
@@ -133,16 +135,16 @@ public class DjsParser extends CommentedTokenParser {
 
     protected String readKey() {
         final Token t = this.current;
-        if (t instanceof StringToken) {
+        final TokenType type = t.type();
+        if (type == TokenType.STRING || type == TokenType.WORD || type == TokenType.NUMBER) {
             this.read();
             return t.parsed();
-        } else if (t.type() == TokenType.WORD || t.type() == TokenType.NUMBER) {
-            this.read();
-            return this.iterator.getText(t.start(), t.end());
         } else if (t.isSymbol(':')) {
             throw this.expected("key before ':'");
+        } else if (t.hasText()) {
+            throw this.illegalToken(t.parsed());
         }
-        throw this.illegalToken(this.iterator.getText(t.start(), t.end()));
+        throw this.illegalToken(type.name());
     }
 
     protected JsonArray readArray() {
@@ -195,12 +197,17 @@ public class DjsParser extends CommentedTokenParser {
         } else if (t instanceof StringToken s) {
             return new JsonString(s.parsed(), s.stringType());
         }
-        final String text = this.iterator.getText(t.start(), t.end());
+        if (!t.hasText()) {
+            if (t.isSymbol(',')) {
+                throw this.unexpected("leading delimiter: ','");
+            }
+            throw this.unexpected(t.type().name());
+        }
+        final String text = t.parsed();
         return switch (text) {
             case "true" -> JsonLiteral.jsonTrue();
             case "false" -> JsonLiteral.jsonFalse();
             case "null" -> JsonLiteral.jsonNull();
-            case "," -> throw this.unexpected("leading delimiter: ','");
             case "" -> throw this.expected("tokens");
             default -> throw this.illegalToken(text);
         };
@@ -208,6 +215,6 @@ public class DjsParser extends CommentedTokenParser {
 
     @Override
     public void close() throws IOException {
-        this.iterator.getParent().close();
+        this.root.close();
     }
 }

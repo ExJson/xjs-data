@@ -109,6 +109,6 @@ public final class TokenTest {
 
     private static Token container(
             final String reference, final TokenType type, final int s, final int e, final Token... tokens) {
-        return new ContainerToken(reference, s, e, 0, 0, s, type, List.of(tokens));
+        return new TokenStream(s, e, 0, 0, s, type, List.of(tokens));
     }
 }

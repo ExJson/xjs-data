@@ -27,7 +27,7 @@ public class JsonParser implements ValueParser {
 
     public JsonParser(final File file, final int bufferSize) throws IOException {
         this.reader = PositionTrackingReader.fromIs(
-            new FileInputStream(file), bufferSize, true);
+            new FileInputStream(file), bufferSize, false);
     }
 
     public @NotNull JsonValue parse() throws IOException {

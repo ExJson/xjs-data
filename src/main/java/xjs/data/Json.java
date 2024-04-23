@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import xjs.data.exception.SyntaxException;
 import xjs.data.serialization.JsonContext;
 import xjs.data.serialization.parser.DjsParser;
-import xjs.data.serialization.token.Tokenizer;
+import xjs.data.serialization.token.DjsTokenizer;
 import xjs.data.transform.JsonCollectors;
 
 import java.io.File;
@@ -294,7 +294,7 @@ public final class Json {
      * @throws IOException If any error occurs in reading from the stream.
      */
     public static JsonValue parse(final InputStream djs) throws IOException {
-        return new DjsParser(Tokenizer.containerize(djs)).parse();
+        return new DjsParser(DjsTokenizer.containerize(djs)).parse();
     }
 
     /**

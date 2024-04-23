@@ -46,6 +46,15 @@ public class Token extends Span<TokenType> {
     }
 
     /**
+     * Indicates whether the original text of this token is available.
+     *
+     * @return <code>true</code>, if it is safe to call {@link #parsed()}
+     */
+    public boolean hasText() {
+        return false;
+    }
+
+    /**
      * Retrieves the parsed text of this token, if applicable. Else,
      * returns a subsequence of the given reference.
      *

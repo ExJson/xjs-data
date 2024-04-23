@@ -68,6 +68,11 @@ public class ParsedToken extends Token {
     }
 
     @Override
+    public boolean hasText() {
+        return true;
+    }
+
+    @Override
     public ParsedToken intoParsed(final CharSequence reference) {
         return this;
     }
@@ -86,8 +91,7 @@ public class ParsedToken extends Token {
     public boolean equals(final Object other) {
         if (this == other) {
             return true;
-        } else if (other instanceof ParsedToken) {
-            final ParsedToken pt = (ParsedToken) other;
+        } else if (other instanceof ParsedToken pt) {
             return this.parsed.equals(pt.parsed) && this.spanEquals(pt);
         }
         return false;

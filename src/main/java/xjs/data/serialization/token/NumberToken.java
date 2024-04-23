@@ -1,5 +1,7 @@
 package xjs.data.serialization.token;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Represents a single numeric token, either in decimal or
  * scientific notation.
@@ -35,6 +37,21 @@ public class NumberToken extends Token {
     public final double number;
 
     /**
+     * The formatted source text of this number.
+     *
+     * Source text is preserved for these tokens as a result of
+     * some ambiguity in DJS. Because the format currently allows
+     * open root objects, if the first token is a number, it may
+     * become a key if followed by a colon, thus requiring a
+     * lookahead.
+     *
+     * Numbers will always be valid in objects due to support for
+     * numeric keys in XJS. However, whether to remove support
+     * for open root objects is still to be determined.
+     */
+    public final @Nullable String formatted;
+
+    /**
      * Constructs a new Token object to be placed on an AST.
      *
      * @param start     The inclusive start index of this token.
@@ -47,6 +64,25 @@ public class NumberToken extends Token {
             final int start, final int end, final int line, final int offset, final double number) {
         super(start, end, line, offset, TokenType.NUMBER);
         this.number = number;
+        this.formatted = null;
+    }
+
+    /**
+     * Constructs a new Token object to be placed on an AST.
+     *
+     * @param start     The inclusive start index of this token.
+     * @param end       The exclusive end index of this token.
+     * @param line      The inclusive line number of this token.
+     * @param offset    The column of the start index.
+     * @param number    The number captured by the token.
+     * @param formatted The formatted source text of the number.
+     */
+    public NumberToken(
+            final int start, final int end, final int line,
+            final int offset, final double number, final @Nullable String formatted) {
+        super(start, end, line, offset, TokenType.NUMBER);
+        this.number = number;
+        this.formatted = formatted;
     }
 
     /**
@@ -57,14 +93,27 @@ public class NumberToken extends Token {
     public NumberToken(final double number) {
         super(TokenType.NUMBER);
         this.number = number;
+        this.formatted = null;
+    }
+
+    @Override
+    public boolean hasText() {
+        return this.formatted != null;
+    }
+
+    @Override
+    public String parsed() {
+        if (this.formatted == null) {
+            return super.parsed();
+        }
+        return this.formatted;
     }
 
     @Override
     public boolean equals(final Object other) {
         if (this == other) {
             return true;
-        } else if (other instanceof NumberToken) {
-            final NumberToken nt = (NumberToken) other;
+        } else if (other instanceof NumberToken nt) {
             return this.number == nt.number && this.spanEquals(nt);
         }
         return false;

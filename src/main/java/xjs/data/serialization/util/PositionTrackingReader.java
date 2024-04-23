@@ -133,6 +133,15 @@ public abstract class PositionTrackingReader implements Closeable {
      */
     public abstract CharSequence getFullText();
 
+    /**
+     * Indicates whether the reader is configured to retain the full text
+     * from the input source.
+     *
+     * @return <code>true</code>, if the reader is configured to capture
+     *         the full text.
+     */
+    public abstract boolean isCapturingFullText();
+
     protected abstract void appendToCapture();
 
     protected abstract String slice();
@@ -449,29 +458,15 @@ public abstract class PositionTrackingReader implements Closeable {
             return;
         }
         switch (this.current) {
-            case '"':
-            case '/':
-            case '\\':
-                this.capture.append((char) this.current);
-                break;
-            case 'b':
-                this.capture.append('\b');
-                break;
-            case 'f':
-                this.capture.append('\f');
-                break;
-            case 'n':
-                this.capture.append('\n');
-                break;
-            case 'r':
-                this.capture.append('\r');
-                break;
-            case 't':
-                this.capture.append('\t');
-                break;
-            case 'u':
+            case '"', '/', '\\' -> this.capture.append((char) this.current);
+            case 'b' -> this.capture.append('\b');
+            case 'f' -> this.capture.append('\f');
+            case 'n' -> this.capture.append('\n');
+            case 'r' -> this.capture.append('\r');
+            case 't' -> this.capture.append('\t');
+            case 'u' -> {
                 final char[] hexChars = new char[4];
-                for(int i = 0; i < 4; i++) {
+                for (int i = 0; i < 4; i++) {
                     this.read();
                     if (!isHexDigit()) {
                         throw this.expected("hexadecimal digit");
@@ -479,9 +474,8 @@ public abstract class PositionTrackingReader implements Closeable {
                     hexChars[i] = (char) this.current;
                 }
                 this.capture.append((char) Integer.parseInt(new String(hexChars), 16));
-                break;
-            default:
-                throw this.expected("valid escape sequence");
+            }
+            default -> throw this.expected("valid escape sequence");
         }
         this.read();
     }
@@ -584,7 +578,6 @@ public abstract class PositionTrackingReader implements Closeable {
         this.skipLineWhitespace();
         this.readIf('\n');
 
-        final CharSequence reference = this.getFullText();
         final StringBuilder output = new StringBuilder();
 
         while (true) {
@@ -596,7 +589,7 @@ public abstract class PositionTrackingReader implements Closeable {
                 this.expect('/');
                 break;
             }
-            this.appendLine(reference, output, lineStart);
+            this.appendLine(output, lineStart);
             if (this.readIf('/')) {
                 break;
             }
@@ -626,27 +619,24 @@ public abstract class PositionTrackingReader implements Closeable {
         return this.index;
     }
 
-    protected void appendLine(
-            final CharSequence reference, final StringBuilder output, final int lineStart) throws IOException {
-        int lastChar = this.index;
+    protected void appendLine(final StringBuilder output, final int lineStart) throws IOException {
+        int lastChar = output.length();
         while (this.current != -1) {
             if (this.current == '\n') {
-                output.append(reference, lineStart, lastChar + 1);
-                if (this.index > lineStart) {
-                    output.append('\n');
-                }
+                output.setLength(lastChar);
+                output.append('\n');
                 return;
             } else if (this.current == '*') {
                 this.read();
                 if (this.current == '/') {
-                    output.append(reference, lineStart, lastChar + 1);
+                    output.setLength(lastChar);
                     return;
                 }
-                lastChar = this.index - 1;
-                continue;
+                lastChar = output.length();
             } else if (!this.isWhitespace()) {
-                lastChar = this.index;
+                lastChar = output.length() + 1;
             }
+            output.append((char) this.current);
             this.read();
         }
     }
@@ -783,6 +773,11 @@ public abstract class PositionTrackingReader implements Closeable {
             return this.out;
         }
 
+        @Override
+        public boolean isCapturingFullText() {
+            return this.out != null;
+        }
+
         public void startCapture() {
             if (this.capture == null) {
                 this.capture = new StringBuilder();
@@ -847,6 +842,11 @@ public abstract class PositionTrackingReader implements Closeable {
         @Override
         public String getFullText() {
             return this.s;
+        }
+
+        @Override
+        public boolean isCapturingFullText() {
+            return true;
         }
 
         @Override

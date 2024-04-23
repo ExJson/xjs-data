@@ -5,8 +5,8 @@ import xjs.data.JsonArray;
 import xjs.data.JsonContainer;
 import xjs.data.JsonValue;
 import xjs.data.exception.SyntaxException;
-import xjs.data.serialization.token.ContainerToken;
 import xjs.data.serialization.token.Token;
+import xjs.data.serialization.token.Tokenizer;
 import xjs.data.serialization.token.TokenStream;
 import xjs.data.serialization.token.TokenType;
 import xjs.data.serialization.util.BufferedStack;
@@ -17,11 +17,11 @@ import java.util.ArrayList;
  * A basic parser type for processing {@link Token tokens} into JSON data.
  *
  * <p>The {@link TokenParser} class should be safe to work with both {@link
- * ContainerToken containerized token streams} and regular {@link TokenStream
+ * Tokenizer containerized token streams} and regular {@link TokenStream
  * token streams}.
  *
- * <p>The basic procedure for using it with {@link ContainerToken container
- * tokens} is as follows:
+ * <p>The basic procedure for using it with {@link TokenStream token streams}
+ * is as follows:
  *
  * <ul>
  *   <li>
@@ -38,7 +38,7 @@ import java.util.ArrayList;
  *       The method itself should always be safe to call and accurate.
  *   </li>
  *   <li>
- *       When working with {@link ContainerToken container tokens},
+ *       When working with {@link Tokenizer containerized token streams},
  *       implementors have the option to call <code>{@link #push()}</code>
  *       to open the current token and push its iterator onto the stack, and
  *       <code>{@link #pop()}</code> to pop the current iterator out of the
@@ -59,7 +59,7 @@ public abstract class TokenParser implements ValueParser {
      * Represents that no values are left in the input.
      */
     protected static final TokenStream EMPTY_VALUE =
-        new ContainerToken("", 0, 0, 0, 0, 0, TokenType.OPEN, new ArrayList<>());
+        new TokenStream(0, 0, 0, 0, 0, TokenType.OPEN, new ArrayList<>());
 
     /**
      * An iterator which always returns empty, representing the end of input.
@@ -73,8 +73,7 @@ public abstract class TokenParser implements ValueParser {
      * which they will always need. It is optimized to minimize the performance
      * impact.
      */
-    protected final BufferedStack.OfTwo<
-        TokenStream.Itr, JsonContainer> stack;
+    protected final BufferedStack.OfTwo<TokenStream.Itr, JsonContainer> stack;
 
     /**
      * The very root container of the input. Implementors may need access to
@@ -85,22 +84,6 @@ public abstract class TokenParser implements ValueParser {
      */
     @ApiStatus.Experimental
     protected final TokenStream root;
-
-    /**
-     * A reference to the input text. Callers must be aware that, when using
-     * lazily-evaluated {@link TokenStream token streams}, <b>this sequence
-     * may not represent the full input <em>until</em> parsing is complete.</b>
-     *
-     * <p>Additionally, this reference may point to a different text body
-     * depending on the current iterator. For any token stream where sub-streams
-     * have been generated, this reference may point to that generated source.
-     *
-     * <p>In other words, the indices of this reference <b>may only correspond
-     * the current token or any tokens in the current token stream.</b> Authors
-     * should <b>avoid doing any manual inspection of this text</b> if generated
-     * streams are to be supported.
-     */
-    protected CharSequence reference;
 
     /**
      * Houses any formatting data for the current value. As with {@link #stack},
@@ -137,8 +120,6 @@ public abstract class TokenParser implements ValueParser {
     protected TokenParser(final TokenStream root) {
         this.stack = BufferedStack.ofTwo();
         this.root = root;
-        // Reference can be mutable and may expand lazily
-        this.reference = root.reference;
         this.formatting = new JsonArray();
         this.iterator = root.iterator();
         this.current = root;
@@ -173,7 +154,6 @@ public abstract class TokenParser implements ValueParser {
             this.stack.push(this.iterator, this.formatting);
             this.iterator = ((TokenStream) this.current).iterator();
             this.formatting = new JsonArray();
-            this.reference = this.iterator.getReference();
             return true;
         }
         return false;
@@ -193,7 +173,6 @@ public abstract class TokenParser implements ValueParser {
         this.stack.pop();
         this.iterator = this.stack.getFirst();
         this.formatting = this.stack.getSecond();
-        this.reference = this.iterator.getReference();
         return true;
     }
 
@@ -435,22 +414,6 @@ public abstract class TokenParser implements ValueParser {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Gets the actual offset of any text in the {@link #reference}.
-     *
-     * @param start  The inclusive start index (e.g. of a line).
-     * @param offset The expected offset.
-     * @return The index after skipping <code>offset</code>.
-     */
-    protected int getActualOffset(final int start, final int offset) {
-        for (int i = start; i < start + offset; i++) {
-            if (!this.isLineWhitespace(this.reference.charAt(i))) {
-                return i;
-            }
-        }
-        return start + offset;
     }
 
     /**

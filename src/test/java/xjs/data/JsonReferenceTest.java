@@ -1,8 +1,6 @@
 package xjs.data;
 
 import org.junit.jupiter.api.Test;
-import xjs.data.Json;
-import xjs.data.JsonValue;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public final class TokenizerTest {
+public final class DjsTokenizerTest {
 
     @Test
     public void single_parsesLineComment() {
@@ -221,40 +221,36 @@ public final class TokenizerTest {
         final String reference = "{hello,world}";
         assertEquals(
             container(
-                reference,
                 TokenType.OPEN,
                 0,
                 13,
                 container(
-                    reference,
                     TokenType.BRACES,
                     0,
                     13,
                     token(TokenType.WORD, 1, 6),
                     symbol(',', 6, 7),
                     token(TokenType.WORD, 7, 12))),
-            Tokenizer.containerize(reference));
+            DjsTokenizer.containerize(reference).readToEnd());
     }
 
     @Test
     public void containerize_readsNestedContainer() {
         final String reference = "{hello,[world]}";
         assertEquals(
-            container(reference, TokenType.OPEN, 0, 15,
+            container(TokenType.OPEN, 0, 15,
                 container(
-                    reference,
                     TokenType.BRACES,
                     0,
                     15,
                     token(TokenType.WORD, 1, 6),
                     symbol(',', 6, 7),
                     container(
-                        reference,
                         TokenType.BRACKETS,
                         7,
                         14,
                         token(TokenType.WORD, 8, 13)))),
-            Tokenizer.containerize(reference));
+            DjsTokenizer.containerize(reference).readToEnd());
     }
 
     @Test
@@ -262,19 +258,17 @@ public final class TokenizerTest {
         final String reference = "{hello,world} \t";
         assertEquals(
             container(
-                reference,
                 TokenType.OPEN,
                 0,
                 13,
                 container(
-                    reference,
                     TokenType.BRACES,
                     0,
                     13,
                     token(TokenType.WORD, 1, 6),
                     symbol(',', 6, 7),
                     token(TokenType.WORD, 7, 12))),
-            Tokenizer.containerize(reference));
+            DjsTokenizer.containerize(reference).readToEnd());
     }
 
     @Test
@@ -282,20 +276,20 @@ public final class TokenizerTest {
         final String reference = "{[}";
         final SyntaxException e =
             assertThrows(SyntaxException.class, () ->
-                Tokenizer.containerize(reference));
+                DjsTokenizer.containerize(reference).readToEnd());
         assertTrue(e.getMessage().contains("Expected ']'"));
     }
 
     @Test
     public void stream_returnsLazilyEvaluatedTokens() {
-        final TokenStream stream = Tokenizer.stream("1234");
+        final TokenStream stream = DjsTokenizer.stream("1234");
         stream.iterator().next();
         assertEquals(1, stream.tokens.size());
     }
     
     private static Token single(final String reference) {
         try {
-            return new Tokenizer(reference).single();
+            return new DjsTokenizer(reference, false).next();
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -334,8 +328,8 @@ public final class TokenizerTest {
     }
 
     private static Token container(
-            final String reference, final TokenType type, final int s, final int e, final Token... tokens) {
-        return new ContainerToken(reference, s, e, 0, 0, s, type, List.of(tokens));
+            final TokenType type, final int s, final int e, final Token... tokens) {
+        return new TokenStream(s, e, 0, 0, s, type, List.of(tokens));
     }
 
     private static int lines(final String reference) {

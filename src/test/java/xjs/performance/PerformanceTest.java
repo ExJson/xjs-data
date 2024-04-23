@@ -2,6 +2,7 @@ package xjs.performance;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Threads;
@@ -9,11 +10,11 @@ import xjs.data.Json;
 import xjs.data.JsonCopy;
 import xjs.data.JsonValue;
 import xjs.data.exception.SyntaxException;
+import xjs.data.serialization.token.DjsTokenizer;
 import xjs.performance.experimental.util.ExperimentalInputStreamByteReader;
 import xjs.data.serialization.parser.JsonParser;
 import xjs.data.serialization.parser.DjsParser;
 import xjs.data.serialization.token.TokenStream;
-import xjs.data.serialization.token.Tokenizer;
 import xjs.data.serialization.util.PositionTrackingReader;
 import xjs.data.serialization.writer.JsonWriter;
 import xjs.data.serialization.writer.DjsWriter;
@@ -118,12 +119,13 @@ public class PerformanceTest {
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public boolean containerizedIsBalanced() {
         try {
-            Tokenizer.containerize(generateNormallyDistributedSample());
+            DjsTokenizer.containerize(generateNormallyDistributedSample()).readToEnd();
             return true;
         } catch (final SyntaxException ignored) {}
         return false;
@@ -139,6 +141,7 @@ public class PerformanceTest {
 
     @Enabled(true)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -148,6 +151,7 @@ public class PerformanceTest {
 
     @Enabled(true)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -159,6 +163,7 @@ public class PerformanceTest {
 
     @Enabled(true)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -168,6 +173,7 @@ public class PerformanceTest {
 
     @Enabled(true)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -179,6 +185,7 @@ public class PerformanceTest {
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -189,6 +196,7 @@ public class PerformanceTest {
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -199,6 +207,7 @@ public class PerformanceTest {
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -209,6 +218,7 @@ public class PerformanceTest {
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -219,6 +229,7 @@ public class PerformanceTest {
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -229,6 +240,7 @@ public class PerformanceTest {
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -239,6 +251,7 @@ public class PerformanceTest {
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -249,6 +262,7 @@ public class PerformanceTest {
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -261,33 +275,36 @@ public class PerformanceTest {
         while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
             sb.append(buffer, 0, bytesRead);
         }
-        return Tokenizer.stream(sb.toString());
+        return DjsTokenizer.stream(sb.toString());
     }
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public TokenStream stream_fromPositionTrackingReader() throws IOException {
         final PositionTrackingReader reader =
             PositionTrackingReader.fromIs(getReadingSampleIS());
-        return Tokenizer.stream(reader.readToEnd());
+        return DjsTokenizer.stream(reader.readToEnd());
     }
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public TokenStream stream_fromStreamReader() throws IOException {
-        final TokenStream stream = Tokenizer.stream(getReadingSampleIS());
+        final TokenStream stream = DjsTokenizer.stream(getReadingSampleIS());
         stream.forEach(t -> {});
         return stream;
     }
 
     @Enabled(false)
     @Benchmark
+    @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -300,7 +317,7 @@ public class PerformanceTest {
         while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
             sb.append(buffer, 0, bytesRead);
         }
-        final TokenStream stream = Tokenizer.stream(sb.toString());
+        final TokenStream stream = DjsTokenizer.stream(sb.toString());
         stream.forEach(t -> {});
         return stream;
     }

@@ -15,7 +15,7 @@ public final class TokenStreamTest {
     @Test
     public void stringify_printsTokenType_andFullText() {
         final TokenStream stream =
-            Tokenizer.stream("word");
+            DjsTokenizer.stream("word");
         final String expected = """
             [
              WORD('word')
@@ -26,10 +26,10 @@ public final class TokenStreamTest {
     @Test
     public void stringify_escapesNewlines() {
         final TokenStream stream =
-            Tokenizer.stream("'''1\n2'''");
+            DjsTokenizer.stream("'''1\n2'''");
         final String expected = """
             [
-             STRING(''''1\\n2'''')
+             STRING('1\\n2')
             ]""";
         assertEquals(expected, stream.stringify());
     }
@@ -37,7 +37,7 @@ public final class TokenStreamTest {
     @Test
     public void stringify_printsAllTokens_inContainer() {
         final TokenStream stream =
-            Tokenizer.stream("1 2 3");
+            DjsTokenizer.stream("1 2 3");
         final String expected = """
             [
              NUMBER(1.0)
@@ -50,7 +50,7 @@ public final class TokenStreamTest {
     @Test
     public void stringify_recurses_intoOtherContainers() {
         final TokenStream stream =
-            Tokenizer.containerize("1 [ 2.25 2.5 2.75 ] 3");
+            DjsTokenizer.containerize("1 [ 2.25 2.5 2.75 ] 3");
         final String expected = """
             [
              NUMBER(1.0)
@@ -67,12 +67,10 @@ public final class TokenStreamTest {
     @Test
     public void toString_doesNotReadToEnd() {
         final TokenStream stream =
-            Tokenizer.stream("1 2 3");
-        // iterator eagerly evaluates first token
+            DjsTokenizer.stream("1 2 3");
         stream.iterator();
         final String expected = """
             [
-             NUMBER(1.0)
              <reading...>
             ]""";
         assertEquals(expected, stream.toString());
@@ -81,23 +79,21 @@ public final class TokenStreamTest {
     @Test
     public void viewTokens_isInternallyMutable() {
         final String reference = "1 2 3";
-        final TokenStream stream = Tokenizer.stream(reference);
+        final TokenStream stream = DjsTokenizer.stream(reference);
 
         final List<Token> tokens = stream.viewTokens();
         assertTrue(tokens.isEmpty());
 
         stream.iterator().next();
         assertEquals(
-            List.of(
-                number(1, 0, 1),
-                number(2, 2, 3)),
+            List.of(number(1, 0, 1)),
             tokens);
     }
 
     @Test
     public void viewTokens_isNotExternallyMutable() {
         final String reference = "1 2 3";
-        final TokenStream stream = Tokenizer.stream(reference);
+        final TokenStream stream = DjsTokenizer.stream(reference);
 
         assertThrows(UnsupportedOperationException.class,
             () -> stream.viewTokens().add(number(0, 0, 0)));
@@ -106,24 +102,24 @@ public final class TokenStreamTest {
     @Test
     public void next_lazilyEvaluatesTokens() {
         final String reference = "1 2 3";
-        final TokenStream stream = Tokenizer.stream(reference);
+        final TokenStream stream = DjsTokenizer.stream(reference);
         assertEquals(0, stream.tokens.size());
 
         final Iterator<Token> iterator = stream.iterator();
-        assertEquals(1, stream.tokens.size());
+        assertEquals(0, stream.tokens.size());
         assertEquals(number(1, 0, 1), iterator.next());
 
-        assertEquals(2, stream.tokens.size());
+        assertEquals(1, stream.tokens.size());
         assertEquals(number(2, 2, 3), iterator.next());
 
-        assertEquals(3, stream.tokens.size());
+        assertEquals(2, stream.tokens.size());
         assertEquals(number(3, 4, 5), iterator.next());
     }
 
     @Test
     public void next_lazilyThrowsSyntaxException() {
-        final String reference = "1 2 'hello";
-        final TokenStream stream = Tokenizer.stream(reference);
+        final String reference = "1 'hello";
+        final TokenStream stream = DjsTokenizer.stream(reference);
         final Iterator<Token> iterator = stream.iterator();
 
         assertEquals(number(1, 0, 1), iterator.next());
@@ -134,7 +130,7 @@ public final class TokenStreamTest {
     public void peek_doesNotAdvanceIterator() {
         final String reference = "1 2 3 4";
         final TokenStream.Itr iterator =
-            Tokenizer.stream(reference).iterator();
+            DjsTokenizer.stream(reference).iterator();
 
         assertEquals(number(1, 0, 1), iterator.next());
 
@@ -151,7 +147,7 @@ public final class TokenStreamTest {
     public void peek_toleratesReverseOrder() {
         final String reference = "1 2 3";
         final TokenStream.Itr iterator =
-            Tokenizer.stream(reference).iterator();
+            DjsTokenizer.stream(reference).iterator();
 
         assertEquals(number(1, 0, 1), iterator.next());
         assertEquals(number(2, 2, 3), iterator.next());
@@ -165,7 +161,7 @@ public final class TokenStreamTest {
     @Test
     public void skipTo_advancesIterator() {
         final String reference = "1 2 3 4";
-        final TokenStream stream = Tokenizer.stream(reference);
+        final TokenStream stream = DjsTokenizer.stream(reference);
         final TokenStream.Itr iterator = stream.iterator();
 
         assertEquals(number(1, 0, 1), iterator.next());
@@ -178,7 +174,7 @@ public final class TokenStreamTest {
     @Test
     public void skip_advancesIterator() {
         final String reference = "1 2 3 4";
-        final TokenStream stream = Tokenizer.stream(reference);
+        final TokenStream stream = DjsTokenizer.stream(reference);
         final TokenStream.Itr iterator = stream.iterator();
 
         assertEquals(number(1, 0, 1), iterator.next());
@@ -191,7 +187,7 @@ public final class TokenStreamTest {
     @Test
     public void skipTo_toleratesReverseOrder() {
         final String reference = "1 2 3";
-        final TokenStream stream = Tokenizer.stream(reference);
+        final TokenStream stream = DjsTokenizer.stream(reference);
         final TokenStream.Itr iterator = stream.iterator();
 
         assertEquals(number(1, 0, 1), iterator.next());
@@ -206,7 +202,7 @@ public final class TokenStreamTest {
     @Test
     public void skip_toleratesReverseOrder() {
         final String reference = "1 2 3";
-        final TokenStream stream = Tokenizer.stream(reference);
+        final TokenStream stream = DjsTokenizer.stream(reference);
         final TokenStream.Itr iterator = stream.iterator();
 
         assertEquals(number(1, 0, 1), iterator.next());
