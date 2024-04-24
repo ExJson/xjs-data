@@ -72,6 +72,13 @@ public class DjsParser extends CommentedTokenParser {
             }
             this.readNextMember(object);
         }
+        if (!object.isEmpty()) {
+            final JsonValue top = object.get(0);
+            if (top.getLinesAbove() == 0) {
+                // allow these to auto-format with other writers
+                top.setLinesAbove(-1);
+            }
+        }
         this.readBottom();
         return this.takeFormatting(object);
     }

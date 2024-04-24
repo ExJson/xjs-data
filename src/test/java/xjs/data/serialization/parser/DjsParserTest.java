@@ -12,6 +12,7 @@ import xjs.data.serialization.writer.JsonWriter;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -40,6 +41,12 @@ public final class DjsParserTest extends CommonParserTest {
     public void parse_readsOpenRoot() {
         assertTrue(new JsonObject().add("a", 1).add("b", 2)
             .matches(this.parse("a:1,b:2")));
+    }
+
+    @Test
+    public void parseOpenRoot_whenFirstValueIsAtTheTop_setsLinesAboveToAuto() {
+        final JsonValue a = this.parse("a:1").asObject().get("a");
+        assertEquals(-1, Objects.requireNonNull(a).getLinesAbove());
     }
 
     @Test
