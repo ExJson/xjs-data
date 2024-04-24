@@ -160,6 +160,12 @@ public final class DjsWriterTest {
     }
 
     @Test
+    public void write_sanitizesKey_beforePrinting() {
+        final JsonObject object = Json.object().add("x.", 1);
+        assertEquals("'x.': 1", write(object));
+    }
+
+    @Test
     public void write_preservesWhitespaceAbove() {
         assertEquals("\n\ntrue", write(Json.value(true).setLinesAbove(2)));
     }

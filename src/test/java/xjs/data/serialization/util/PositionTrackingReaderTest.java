@@ -198,6 +198,30 @@ public final class PositionTrackingReaderTest {
     }
 
     @Test
+    public void skipToNL_returnsIndexOfNl() throws IOException {
+        final Sample sample = new Sample("abc\n123", NORMAL_BUFFER);
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            assertEquals(3, reader.skipToNL());
+        }
+    }
+
+    @Test
+    public void skipToNL_returnsIndexOfEof() throws IOException {
+        final Sample sample = new Sample("abc", NORMAL_BUFFER);
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            assertEquals(3, reader.skipToNL());
+        }
+    }
+
+    @Test
+    public void skipToNL_returnsEndOfNonWhitespace() throws IOException {
+        final Sample sample = new Sample("abc \t\n123", NORMAL_BUFFER);
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            assertEquals(3, reader.skipToNL());
+        }
+    }
+
+    @Test
     public void readNumber_readsFullNumber() throws IOException {
         final Sample sample = new Sample("123456789", MINIMUM_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {

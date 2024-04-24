@@ -317,14 +317,14 @@ public abstract class PositionTrackingReader implements Closeable {
     /**
      * Skips <em>all</em> characters until the next new line or end of input.
      *
-     * @return The last index of a non-whitespace character.
+     * @return The exclusive index of the last non-whitespace character
      * @throws IOException If the underlying reader throws an exception.
      */
     public int skipToNL() throws IOException {
         int last = this.index;
         while (this.current != '\n' && this.current != -1) {
             if (!this.isLineWhitespace()) {
-                last = this.index;
+                last = this.index + 1;
             }
             this.read();
         }
@@ -558,7 +558,7 @@ public abstract class PositionTrackingReader implements Closeable {
             this.read();
         }
         this.startCapture();
-        final int e = this.skipToNL() + 1;
+        final int e = this.skipToNL();
         return new CommentToken(s, e, this.line, o, type, this.endCapture(e));
     }
 
