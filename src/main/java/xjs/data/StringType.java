@@ -83,14 +83,19 @@ public enum StringType {
 
     /**
      * Algorithm for selecting a "best-fit" string type for the given text, assuming the
-     * text represents a key or identifier.
+     * text represents a key or identifier matching the following pattern:
+     *
+     * <pre>{@code
+     * [\w_\$]+
+     * }</pre>
      *
      * @param text The text being analyzed
      * @return An appropriate string time to use; either single, double, multi, or implicit.
      */
     public static StringType selectKey(final String text) {
         for (int i = 0; i < text.length(); i++) {
-            if (text.charAt(i) == ' ') {
+            final char c = text.charAt(i);
+            if (!Character.isLetterOrDigit(c) && c != '_' && c != '$') {
                 return selectValue(text);
             }
         }

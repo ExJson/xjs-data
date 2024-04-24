@@ -1,6 +1,5 @@
 package xjs.data.serialization.writer;
 
-import xjs.data.JsonContainer;
 import xjs.data.JsonValue;
 import xjs.data.StringType;
 
@@ -68,20 +67,6 @@ public class DjsWriter extends CommentedElementWriter {
             default -> this.tw.write(value.toString());
         }
     }
-
-//    @Override
-//    protected boolean shouldSeparateOpener() {
-//        final JsonContainer parent = this.parent();
-//        if (this.format && this.level > 0 && !parent.isEmpty() && this.isCondensed()) {
-//            return parent.isObject();
-//        }
-//        return false;
-//    }
-
-//    @Override
-//    protected boolean shouldSeparateCloser() {
-//        return this.isCondensed() && this.level > 0;
-//    }
 
     protected void writeObject() throws IOException {
         this.open('{');
