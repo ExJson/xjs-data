@@ -267,39 +267,6 @@ public abstract class Tokenizer implements Closeable {
         this.reader.close();
     }
 
-//    private static ContainerToken container(
-//            final TokenStream.Itr itr, final Span<?> span, final TokenType type, final char closer) {
-//        final List<Token> tokens = new ArrayList<>();
-//        int e = span.start();
-//        int el = span.lastLine();
-//        while (itr.hasNext()) {
-//            final Token control = itr.next();
-//            if (control.isSymbol(closer)) {
-//                return new ContainerToken(
-//                    span.start(), control.end(), span.line(), control.lastLine(), span.offset(), type, tokens);
-//            }
-//            final Token next = next(itr, control);
-//            tokens.add(next);
-//            e = next.end();
-//            el = next.lastLine();
-//        }
-//        if (closer != '\u0000') {
-//            throw SyntaxException.expected(closer, span.line(), span.offset());
-//        }
-//        return new ContainerToken(span.start(), e, span.line(), el, span.offset(), type, tokens);
-//    }
-//
-//    private static Token next(final TokenStream.Itr itr, final Token control) {
-//        if (control.isSymbol('{')) {
-//            return container(itr, control, TokenType.BRACES, '}');
-//        } else if (control.isSymbol('[')) {
-//            return container(itr, control, TokenType.BRACKETS, ']');
-//        } else if (control.isSymbol('(')) {
-//            return container(itr, control, TokenType.PARENTHESES, ')');
-//        }
-//        return control;
-//    }
-
     protected void updateSpan(final Token t, final int s, final int e, final int l, final int o) {
         t.setStart(s);
         t.setEnd(e);
