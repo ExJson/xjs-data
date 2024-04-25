@@ -198,6 +198,63 @@ public final class PositionTrackingReaderTest {
     }
 
     @Test
+    public void peek_returnsNextCharacter() throws IOException {
+        final Sample sample = new Sample("0123456789", MINIMUM_BUFFER);
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            for (char c = '0'; c <= '9'; c++) {
+                if (c == '9') {
+                    assertEquals(-1, reader.peek());
+                } else {
+                    assertEquals(c + 1, reader.peek());
+                }
+                assertTrue(reader.readIf(c));
+            }
+        }
+    }
+
+    @Test
+    public void peek_doesNotAdvanceColumnOrIndex() throws IOException {
+        final Sample sample = new Sample("0123456789", MINIMUM_BUFFER);
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            for (char c = '0'; c <= '9'; c++) {
+                final int idx = reader.index;
+                final int col = reader.column;
+                reader.peek();
+                assertEquals(idx, reader.index);
+                assertEquals(col, reader.column);
+                reader.read();
+            }
+        }
+    }
+
+    @Test
+    public void peek_withPartialCapture_doesNotMangleCapture() throws IOException {
+        final Sample sample = new Sample("0123456789", MINIMUM_BUFFER);
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.readIf('0');
+            reader.startCapture();
+            for (char c = '1'; c <= '8'; c++) {
+                reader.peek();
+                assertTrue(reader.readIf(c));
+            }
+            assertEquals("12345678", reader.endCapture());
+        }
+    }
+
+    @Test
+    public void peek_withFullCapture_doesNotMangleCapture() throws IOException {
+        final Sample sample = new Sample("0123456789", MINIMUM_BUFFER);
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.startCapture();
+            for (char c = '0'; c <= '9'; c++) {
+                reader.peek();
+                assertTrue(reader.readIf(c));
+            }
+            assertEquals("0123456789", reader.endCapture());
+        }
+    }
+
+    @Test
     public void skipToNL_returnsIndexOfNl() throws IOException {
         final Sample sample = new Sample("abc\n123", NORMAL_BUFFER);
         for (final PositionTrackingReader reader : sample.getAllReaders()) {

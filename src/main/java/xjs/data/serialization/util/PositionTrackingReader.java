@@ -154,6 +154,14 @@ public abstract class PositionTrackingReader implements Closeable {
     public abstract void read() throws IOException;
 
     /**
+     * Gets the next character after the current index, else -1.
+     *
+     * @return The next character, else -1
+     * @throws IOException If the underlying reader throws an exception.
+     */
+    public abstract int peek() throws IOException;
+
+    /**
      * Advances the reader by a single character, <em>if</em> the current
      * character equals the input.
      *
@@ -797,6 +805,30 @@ public abstract class PositionTrackingReader implements Closeable {
             return new String(this.buffer, this.captureStart, end - this.captureStart);
         }
 
+        @Override
+        public int peek() throws IOException {
+            if (this.current == -1) {
+                return -1;
+            }
+            if (this.bufferIndex < this.fill) {
+                return this.buffer[this.bufferIndex];
+            }
+            if (this.captureStart != -1) {
+                this.appendToCapture();
+                this.captureStart = 0;
+            }
+            this.fill = 1 + this.reader.read(this.buffer, 1, this.buffer.length - 1);
+            this.buffer[0] = (char) this.current;
+            this.bufferIndex = 1;
+            if (this.fill == 0) {
+                return -1;
+            }
+            if (this.out != null) {
+                this.out.append(this.buffer, 1, this.fill - 1);
+            }
+            return this.buffer[this.bufferIndex];
+        }
+
         public void read() throws IOException {
             if (this.bufferIndex == this.fill) {
                 if (this.captureStart != -1) {
@@ -857,6 +889,13 @@ public abstract class PositionTrackingReader implements Closeable {
         @Override
         protected String slice() {
             return this.s.substring(this.captureStart, this.index);
+        }
+
+        @Override
+        public int peek() {
+            final int i = this.index;
+            final String s = this.s;
+            return i < s.length() - 1 ? s.charAt(i + 1) : -1;
         }
 
         @Override

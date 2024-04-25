@@ -57,6 +57,11 @@ public class ExperimentalInputStreamByteReader extends PositionTrackingReader {
         return new String(this.buffer, this.captureStart, this.index, StandardCharsets.UTF_8);
     }
 
+    @Override
+    public int peek() {
+        return -1;
+    }
+
     public void read() throws IOException {
         if (this.index == this.charsOut.position()) {
             if (this.captureStart != -1) {
