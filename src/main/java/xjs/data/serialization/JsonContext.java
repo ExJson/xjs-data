@@ -223,8 +223,8 @@ public class JsonContext {
         WRITERS.put("djs", DEFAULT_WRITER);
         ALIASES.put("xjs", "djs"); // temporary to provide compat until the new format
 
-        COMPAT_AVAILABLE = isClassAvailable("xjs.data.serialization.XjsCompat");
-        TRANSFORM_AVAILABLE = isClassAvailable("xjs.data.transform.JsonTransformer");
+        COMPAT_AVAILABLE = isClassAvailable("xjs.compat.serialization.XjsCompat");
+        TRANSFORM_AVAILABLE = isClassAvailable("xjs.transform.JsonTransformer");
     }
 
     private static boolean isClassAvailable(final String name) {
