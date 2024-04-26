@@ -480,8 +480,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
                         stream.preserveOutput();
                     }
                     source.add(next);
-                }
-                if (enqueue) {
+                } else if (enqueue) {
                     pending.add(next);
                 }
             }
