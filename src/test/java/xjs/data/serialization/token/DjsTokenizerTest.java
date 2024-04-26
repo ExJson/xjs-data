@@ -284,7 +284,7 @@ public final class DjsTokenizerTest {
     public void stream_returnsLazilyEvaluatedTokens() {
         final TokenStream stream = DjsTokenizer.stream("1234");
         stream.iterator().next();
-        assertEquals(1, stream.tokens.size());
+        assertEquals(1, stream.source.size());
     }
     
     private static Token single(final String reference) {
