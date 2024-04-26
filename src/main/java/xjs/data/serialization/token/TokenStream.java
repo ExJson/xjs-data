@@ -10,10 +10,12 @@ import xjs.data.serialization.util.PositionTrackingReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * Represents any sequence of other tokens.
@@ -67,8 +69,10 @@ import java.util.List;
  * }</pre>
  */
 public class TokenStream extends Token implements Iterable<Token>, Closeable {
-    protected final List<Token> tokens;
+    protected final Queue<Token> pending = new ArrayDeque<>();
     protected volatile @Nullable Tokenizer tokenizer;
+    protected List<Token> source;
+    protected int lastRead;
 
     /**
      * Constructs a new Token object to be placed on an AST.
@@ -84,7 +88,8 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
     public TokenStream(final int start, final int end, final int line, final int lastLine,
                        final int offset, final TokenType type, final List<Token> tokens) {
         super(start, end, line, lastLine, offset, type);
-        this.tokens = new ArrayList<>(tokens);
+        this.source = new ArrayList<>(tokens);
+        this.lastRead = tokens.size() - 1;
     }
 
     /**
@@ -95,7 +100,8 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
      */
     public TokenStream(final @NotNull Tokenizer tokenizer, final TokenType type) {
         super(tokenizer.reader.index, -1, tokenizer.reader.line, -1, tokenizer.reader.index, type);
-        this.tokens = new ArrayList<>();
+        this.source = Collections.emptyList();
+        this.lastRead = -1;
         this.tokenizer = tokenizer;
     }
 
@@ -108,8 +114,23 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
      */
     public TokenStream(final @NotNull Tokenizer tokenizer, final Token from, final TokenType type) {
         super(from.start(), -1, from.line(), -1, from.offset(), type);
-        this.tokens = new ArrayList<>();
+        this.source = Collections.emptyList();
+        this.lastRead = -1;
         this.tokenizer = tokenizer;
+    }
+
+    /**
+     * Configures the stream to preserve its full token output. This
+     * output will be visible to callers using {@link #stringify} and
+     * {@link #viewTokens}.
+     *
+     * @return <code>this</code>, for method chaining.
+     */
+    public TokenStream preserveOutput() {
+        if (this.source == Collections.EMPTY_LIST) {
+            this.source = new ArrayList<>();
+        }
+        return this;
     }
 
     /**
@@ -142,11 +163,11 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
             this.readToEnd();
         }
         final StringBuilder sb = new StringBuilder("[");
-        final List<Token> copy = new ArrayList<>(this.tokens);
+        final List<Token> copy = new ArrayList<>(this.source);
         for (final Token token : copy) {
             this.stringifySingle(sb, token, level, readToEnd);
         }
-        if (this.tokenizer != null || this.tokens.size() != copy.size()) {
+        if (this.tokenizer != null || this.source.size() != copy.size()) {
             this.writeNewLine(sb, level);
             sb.append("<reading...>");
         }
@@ -159,7 +180,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         final Tokenizer tokenizer = this.tokenizer;
         if (tokenizer != null) {
             synchronized (this) {
-                this.forEach(token -> {});
+                this.iterator().peek(Integer.MAX_VALUE);
             }
         }
         return this;
@@ -189,22 +210,21 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
     }
 
     public List<Token> viewTokens() {
-        return Collections.unmodifiableList(this.tokens);
+        return Collections.unmodifiableList(this.source);
     }
 
     public @Nullable Lookup lookup(final char symbol, final boolean exact) {
         return this.lookup(symbol, 0, exact);
     }
 
-    public @Nullable Lookup lookup(final char symbol, final int fromIndex, final boolean exact) {
+    public @Nullable Lookup lookup(final char symbol, int fromIndex, final boolean exact) {
         final Itr itr = this.iterator();
-        itr.skipTo(fromIndex);
-        while (itr.hasNext()) {
-            final Token token = itr.next();
+        Token token;
+        while ((token = itr.peek(++fromIndex)) != null) {
             if (token.isSymbol(symbol)) {
                 final Lookup result = new Lookup(token, itr.getIndex());
                 if (exact && (result.followsOtherSymbol() || result.precedesOtherSymbol())) {
-                    return this.lookup(symbol, itr.getIndex(), true);
+                    return this.lookup(symbol, fromIndex - 1, true);
                 }
                 return result;
             }
@@ -260,7 +280,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         if (o instanceof TokenStream) {
             return super.equals(o)
                 && this.lastLine == ((TokenStream) o).lastLine
-                && this.tokens.equals(((TokenStream) o).tokens);
+                && this.source.equals(((TokenStream) o).source);
         }
         return false;
     }
@@ -292,15 +312,15 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
 
         public boolean followsOtherSymbol() {
             if (this.index > 0) {
-                final Token previous = tokens.get(this.index - 1);
+                final Token previous = source.get(this.index - 1);
                 return previous.type() == TokenType.SYMBOL && this.token.start() == previous.end();
             }
             return false;
         }
 
         public boolean precedesOtherSymbol() {
-            if (this.index < tokens.size() - 1) {
-                final Token following = tokens.get(this.index + 1);
+            if (this.index < source.size() - 1) {
+                final Token following = source.get(this.index + 1);
                 return following.type() == TokenType.SYMBOL && this.token.end() == following.start();
             }
             return false;
@@ -308,8 +328,8 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
 
         @ApiStatus.Experimental
         public boolean isFollowedBy(final char symbol) {
-            if (tokens.size() > this.index + 1) {
-                final Token following = tokens.get(index + 1);
+            if (source.size() > this.index + 1) {
+                final Token following = source.get(index + 1);
                 return this.token.end() == following.start()
                         && following.isSymbol(symbol);
             }
@@ -319,6 +339,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
 
     public class Itr implements Iterator<Token> {
         protected final char closer;
+        protected Token previous;
         protected Token next;
         protected boolean ready;
         protected int elementIndex;
@@ -350,16 +371,28 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         }
 
         protected void read() {
-            this.next = this.peek(1);
+            this.previous = this.next;
+            if (!pending.isEmpty()) {
+                this.next = pending.poll();
+            } else if (this.elementIndex + 1 < source.size()) {
+                this.next = source.get(this.elementIndex + 1);
+            } else {
+                this.next = this.resolve(1, false);
+            }
         }
 
         public void skipTo(final int index) {
-            this.elementIndex = index - 1;
-            this.ready = true;
+            this.skip((index - 1) - this.elementIndex);
         }
 
         public void skip(final int amount) {
+            for (int i = 0; i < amount; i++) {
+                if (!pending.isEmpty()) {
+                    pending.poll();
+                }
+            }
             this.elementIndex = this.elementIndex + amount;
+            this.resolve(0, false);
             this.ready = true;
         }
 
@@ -381,16 +414,37 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         }
 
         public @Nullable Token peek(final int amount) {
-            final int peekIndex = this.elementIndex + amount;
-            if (peekIndex >= 0 && peekIndex < tokens.size()) {
-                return tokens.get(peekIndex);
+            final Token peek = this.getCached(amount);
+            return peek != null ? peek : this.resolve(amount, true);
+        }
+
+        protected @Nullable Token getCached(final int offset) {
+            if (offset == -1) {
+                return this.previous;
+            } else if (!pending.isEmpty()) {
+                if (offset == 1) {
+                    return pending.peek();
+                }
+                final int pendingIdx = offset - 1;
+                if (pendingIdx > 0 && pendingIdx < pending.size()) {
+                    return new ArrayList<>(pending).get(pendingIdx);
+                }
+            } else if (!source.isEmpty()) {
+                final int peekIndex = this.elementIndex + offset;
+                if (peekIndex >= 0 && peekIndex < source.size()) {
+                    return source.get(peekIndex);
+                }
             }
+            return null;
+        }
+
+        protected @Nullable Token resolve(final int offset, final boolean enqueue) {
             final Tokenizer tokenizer = TokenStream.this.tokenizer;
             if (tokenizer == null) {
                 return null;
             }
-            Token next = tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);
-            while (tokens.size() < this.elementIndex + amount + 1) {
+            Token next = this.getCached(offset - 1);
+            while (lastRead < this.elementIndex + offset) {
                 if (next instanceof TokenStream stream) {
                     stream.readToEnd();
                     this.expandToFit(stream);
@@ -400,11 +454,12 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }
+                lastRead++;
                 if (next == null) {
                     if (this.closer != '\u0000') {
                         final PositionTrackingReader reader = tokenizer.getReader();
                         throw SyntaxException.expected(
-                            this.closer, reader.line, reader.column);
+                                this.closer, reader.line, reader.column);
                     }
                     tryClose(tokenizer);
                     TokenStream.this.tokenizer = null;
@@ -415,7 +470,12 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
                     TokenStream.this.tokenizer = null;
                     return null;
                 }
-                tokens.add(next);
+                if (source != Collections.EMPTY_LIST) {
+                    source.add(next);
+                }
+                if (enqueue) {
+                    pending.add(next);
+                }
             }
             return next;
         }

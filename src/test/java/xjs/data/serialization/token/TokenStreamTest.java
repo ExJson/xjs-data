@@ -14,8 +14,21 @@ public final class TokenStreamTest {
 
     @Test
     public void stringify_printsTokenType_andFullText() {
+        TokenStream s = DjsTokenizer.stream("k:'v'//eol");
+        s.lookup(':', false);
+        TokenStream.Itr itr = s.iterator();
+        itr.next();
+        itr.next();
+        itr.next();
+
+        s = DjsTokenizer.containerize("{}\n//eol");
+        s.lookup(':', false);
+        itr = s.iterator();
+        itr.next();
+        itr.next();
+
         final TokenStream stream =
-            DjsTokenizer.stream("word");
+            DjsTokenizer.stream("word").preserveOutput();
         final String expected = """
             [
              WORD('word')
@@ -79,7 +92,7 @@ public final class TokenStreamTest {
     @Test
     public void viewTokens_isInternallyMutable() {
         final String reference = "1 2 3";
-        final TokenStream stream = DjsTokenizer.stream(reference);
+        final TokenStream stream = DjsTokenizer.stream(reference).preserveOutput();
 
         final List<Token> tokens = stream.viewTokens();
         assertTrue(tokens.isEmpty());
@@ -103,16 +116,16 @@ public final class TokenStreamTest {
     public void next_lazilyEvaluatesTokens() {
         final String reference = "1 2 3";
         final TokenStream stream = DjsTokenizer.stream(reference);
-        assertEquals(0, stream.tokens.size());
+        assertTrue(stream.source.isEmpty());
 
         final Iterator<Token> iterator = stream.iterator();
-        assertEquals(0, stream.tokens.size());
+        assertTrue(stream.source.isEmpty());
         assertEquals(number(1, 0, 1), iterator.next());
 
-        assertEquals(1, stream.tokens.size());
+        assertTrue(stream.source.isEmpty());
         assertEquals(number(2, 2, 3), iterator.next());
 
-        assertEquals(2, stream.tokens.size());
+        assertTrue(stream.source.isEmpty());
         assertEquals(number(3, 4, 5), iterator.next());
     }
 
