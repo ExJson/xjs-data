@@ -149,7 +149,7 @@ public class PerformanceTest {
         return new DjsParser(SIMPLE_DJS_SAMPLE).parse();
     }
 
-    @Enabled(true)
+    @Enabled(false)
     @Benchmark
     @Fork(2)
     @Threads(4)
@@ -161,7 +161,7 @@ public class PerformanceTest {
         return sw.toString();
     }
 
-    @Enabled(true)
+    @Enabled(false)
     @Benchmark
     @Fork(2)
     @Threads(4)
@@ -171,7 +171,7 @@ public class PerformanceTest {
         return new JsonParser(JSON_SAMPLE).parse();
     }
 
-    @Enabled(true)
+    @Enabled(false)
     @Benchmark
     @Fork(2)
     @Threads(4)

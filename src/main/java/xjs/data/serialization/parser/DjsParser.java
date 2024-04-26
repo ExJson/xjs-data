@@ -1,6 +1,7 @@
 package xjs.data.serialization.parser;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import xjs.data.comments.CommentType;
 import xjs.data.Json;
 import xjs.data.JsonArray;
@@ -8,9 +9,11 @@ import xjs.data.JsonLiteral;
 import xjs.data.JsonObject;
 import xjs.data.JsonString;
 import xjs.data.JsonValue;
+import xjs.data.exception.SyntaxException;
 import xjs.data.serialization.token.DjsTokenizer;
 import xjs.data.serialization.token.NumberToken;
 import xjs.data.serialization.token.StringToken;
+import xjs.data.serialization.token.SymbolToken;
 import xjs.data.serialization.token.Token;
 import xjs.data.serialization.token.TokenStream;
 import xjs.data.serialization.token.TokenType;
@@ -32,7 +35,7 @@ public class DjsParser extends CommentedTokenParser {
      * @throws IOException If an error occurs when reading the file.
      */
     public DjsParser(final File file) throws IOException {
-        this(DjsTokenizer.containerize(new FileInputStream(file)));
+        this(DjsTokenizer.stream(new FileInputStream(file)));
     }
 
     /**
@@ -41,7 +44,7 @@ public class DjsParser extends CommentedTokenParser {
      * @param text The JSON text in DJS format.
      */
     public DjsParser(final String text) {
-        this(DjsTokenizer.containerize(text));
+        this(DjsTokenizer.stream(text));
     }
 
     /**
@@ -55,15 +58,46 @@ public class DjsParser extends CommentedTokenParser {
 
     @Override
     public @NotNull JsonValue parse() {
-        if (this.root.lookup(':', false) != null) {
+        if (this.root.type() == TokenType.OPEN) {
+            this.read();
+        }
+        this.readWhitespace();
+        if (this.isEndOfContainer() || this.isOpenRoot()) {
             return this.readOpenRoot();
         }
         return this.readClosedRoot();
     }
 
+    protected boolean isOpenRoot() {
+        final TokenType type = this.current.type();
+        if (type == TokenType.SYMBOL) { // punctuation
+            return false;
+        }
+        final Token peek = this.peekWhitespace();
+        if (peek == null) {
+            return false;
+        }
+        return peek.isSymbol(':');
+    }
+
+    protected @Nullable Token peekWhitespace() {
+        Token peek = this.iterator.peek();
+        int peekAmount = 1;
+        while (peek != null) {
+            switch (peek.type()) {
+                case BREAK:
+                case COMMENT:
+                    peek = this.iterator.peek(++peekAmount);
+                    break;
+                default:
+                    return peek;
+            }
+        }
+        return null;
+    }
+
     protected JsonObject readOpenRoot() {
         final JsonObject object = new JsonObject();
-        this.read();
         this.readAboveOpenRoot(object);
         while (true) {
             this.readWhitespace(false);
@@ -84,55 +118,45 @@ public class DjsParser extends CommentedTokenParser {
     }
 
     protected JsonValue readClosedRoot() {
-        if (this.current.type() == TokenType.OPEN) {
-            this.read();
-            if (this.current == EMPTY_VALUE) {
-                throw this.unexpected("end of file");
-            }
-        }
         this.readAbove();
         final JsonValue result = this.readValue();
-
         this.readAfter();
         this.readBottom();
         return this.takeFormatting(result);
     }
 
     protected JsonValue readValue() {
-        switch (this.current.type()) {
-            case BRACKETS:
-                return this.readArray();
-            case BRACES:
-                return this.readObject();
-            default:
-                final JsonValue value = this.readSingle();
-                this.read();
-                return value;
+        if (this.current.isSymbol('{')) {
+            return this.readObject();
+        } else if (this.current.isSymbol('[')) {
+            return this.readArray();
         }
+        final JsonValue value = this.readSingle();
+        this.read();
+        return value;
     }
 
     protected JsonObject readObject() {
         final JsonObject object = new JsonObject();
-        if (!this.open()) {
-            return this.close(object);
+        if (!this.open('{', '}')) {
+            return this.close(object, '}');
         }
         do {
             this.readWhitespace(false);
-            if (this.isEndOfContainer()) {
-                return this.close(object);
+            if (this.isEndOfContainer('}')) {
+                return this.close(object, '}');
             }
         } while (this.readNextMember(object));
-        return this.close(object);
+        return this.close(object, '}');
     }
 
     protected boolean readNextMember(final JsonObject object) {
         this.setAbove();
 
         final String key = this.readKey();
-
         this.readBetween(':');
-
         final JsonValue value = this.readValue();
+
         object.add(key, value);
 
         final boolean delimiter = this.readDelimiter();
@@ -143,29 +167,36 @@ public class DjsParser extends CommentedTokenParser {
     protected String readKey() {
         final Token t = this.current;
         final TokenType type = t.type();
-        if (type == TokenType.STRING || type == TokenType.WORD || type == TokenType.NUMBER) {
+        if (this.isLegalKeyType(type)) {
+            final Token peek = this.peekWhitespace();
+            if (peek != null && this.isLegalKeyType(peek.type())) {
+                // purely to provide useful errors (hjson can be tricky)
+                throw this.whitespaceInKey();
+            }
             this.read();
             return t.parsed();
         } else if (t.isSymbol(':')) {
-            throw this.expected("key before ':'");
+            throw this.emptyKey();
         } else if (t.hasText()) {
             throw this.illegalToken(t.parsed());
+        } else if (t instanceof SymbolToken s) {
+            throw this.punctuationInKey(s.symbol);
         }
         throw this.illegalToken(type.name());
     }
 
     protected JsonArray readArray() {
         final JsonArray array = new JsonArray();
-        if (!this.open()) {
-            return this.close(array);
+        if (!this.open('[', ']')) {
+            return this.close(array, ']');
         }
         do {
             this.readWhitespace(false);
-            if (this.isEndOfContainer()) {
-                return this.close(array);
+            if (this.isEndOfContainer(']')) {
+                return this.close(array, ']');
             }
         } while (this.readNextElement(array));
-        return this.close(array);
+        return this.close(array, ']');
     }
 
     protected boolean readNextElement(final JsonArray array) {
@@ -206,7 +237,11 @@ public class DjsParser extends CommentedTokenParser {
         }
         if (!t.hasText()) {
             if (t.isSymbol(',')) {
-                throw this.unexpected("leading delimiter: ','");
+                throw this.leadingDelimiter();
+            } else if (t instanceof SymbolToken s) {
+                throw this.punctuationInValue(s.symbol);
+            } else if (this.isEndOfContainer()) {
+                throw this.endOfContainer();
             }
             throw this.unexpected(t.type().name());
         }
@@ -218,6 +253,34 @@ public class DjsParser extends CommentedTokenParser {
             case "" -> throw this.expected("tokens");
             default -> throw this.illegalToken(text);
         };
+    }
+
+    protected boolean isLegalKeyType(final TokenType type) {
+        return type == TokenType.STRING || type == TokenType.WORD || type == TokenType.NUMBER;
+    }
+
+    protected SyntaxException emptyKey() {
+        return this.expected("key (for an empty key name use quotes)");
+    }
+
+    protected SyntaxException whitespaceInKey() {
+        return this.unexpected("whitespace in key (use quotes to include)");
+    }
+
+    protected SyntaxException punctuationInKey(final char c) {
+        return this.unexpected("punctuation ('" + c + "') in key (use quotes to include)");
+    }
+
+    protected SyntaxException leadingDelimiter() {
+        return this.unexpected("leading delimiter (use quotes to include): ','");
+    }
+
+    protected SyntaxException punctuationInValue(final char c) {
+        return this.unexpected("punctuation ('" + c + "') in value (use quotes to include)");
+    }
+
+    protected SyntaxException endOfContainer() {
+        return this.unexpected("end of container when expecting a value (use empty double quotes for empty string)");
     }
 
     @Override

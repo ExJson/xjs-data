@@ -71,8 +71,8 @@ public final class DjsParserTest extends CommonParserTest {
     }
 
     @Test
-    public void parse_doesNotTolerate_emptyFile() {
-        assertThrows(SyntaxException.class, () -> this.parse(""));
+    public void emptyFile_isImplicitlyAnObject() {
+        assertTrue(this.parse("").isObject());
     }
 
     @Test

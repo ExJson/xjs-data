@@ -77,7 +77,7 @@ public abstract class CommentedTokenParser extends TokenParser {
      *             stored.
      */
     protected void readAboveOpenRoot(final JsonObject root) {
-        this.readWhitespace();
+        this.readWhitespace(false);
         this.splitOpenHeader(root);
     }
 
