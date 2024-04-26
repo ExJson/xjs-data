@@ -14,21 +14,8 @@ public final class TokenStreamTest {
 
     @Test
     public void stringify_printsTokenType_andFullText() {
-        TokenStream s = DjsTokenizer.stream("k:'v'//eol");
-        s.lookup(':', false);
-        TokenStream.Itr itr = s.iterator();
-        itr.next();
-        itr.next();
-        itr.next();
-
-        s = DjsTokenizer.containerize("{}\n//eol");
-        s.lookup(':', false);
-        itr = s.iterator();
-        itr.next();
-        itr.next();
-
         final TokenStream stream =
-            DjsTokenizer.stream("word").preserveOutput();
+            DjsTokenizer.stream("word");
         final String expected = """
             [
              WORD('word')
@@ -61,6 +48,33 @@ public final class TokenStreamTest {
     }
 
     @Test
+    public void stringify_whenNotPreservingOutput_displaysRemainingOutput() {
+        final TokenStream stream =
+            DjsTokenizer.stream("1 2 3");
+        final String expected = """
+            [
+             NUMBER(2.0)
+             NUMBER(3.0)
+            ]""";
+        stream.iterator().next();
+        assertEquals(expected, stream.stringify());
+    }
+
+    @Test
+    public void stringify_whenPreservingOutput_alwaysDisplaysFullOutput() {
+        final TokenStream stream =
+            DjsTokenizer.stream("1 2 3").preserveOutput();
+        final String expected = """
+            [
+             NUMBER(1.0)
+             NUMBER(2.0)
+             NUMBER(3.0)
+            ]""";
+        stream.iterator().next();
+        assertEquals(expected, stream.stringify());
+    }
+
+    @Test
     public void stringify_recurses_intoOtherContainers() {
         final TokenStream stream =
             DjsTokenizer.containerize("1 [ 2.25 2.5 2.75 ] 3");
@@ -81,11 +95,23 @@ public final class TokenStreamTest {
     public void toString_doesNotReadToEnd() {
         final TokenStream stream =
             DjsTokenizer.stream("1 2 3");
-        stream.iterator();
         final String expected = """
             [
              <reading...>
             ]""";
+        assertEquals(expected, stream.toString());
+    }
+
+    @Test
+    public void toString_displaysPartialOutput() {
+        final TokenStream stream =
+            DjsTokenizer.stream("1 2 3").preserveOutput();
+        final String expected = """
+            [
+             NUMBER(1.0)
+             <reading...>
+            ]""";
+        stream.iterator().next();
         assertEquals(expected, stream.toString());
     }
 
@@ -157,10 +183,10 @@ public final class TokenStreamTest {
     }
 
     @Test
-    public void peek_toleratesReverseOrder() {
+    public void peek_whenPreservingOutput_toleratesReverseOrder() {
         final String reference = "1 2 3";
         final TokenStream.Itr iterator =
-            DjsTokenizer.stream(reference).iterator();
+            DjsTokenizer.stream(reference).preserveOutput().iterator();
 
         assertEquals(number(1, 0, 1), iterator.next());
         assertEquals(number(2, 2, 3), iterator.next());
@@ -198,9 +224,9 @@ public final class TokenStreamTest {
     }
 
     @Test
-    public void skipTo_toleratesReverseOrder() {
+    public void skipTo_whenPreservingOutput_toleratesReverseOrder() {
         final String reference = "1 2 3";
-        final TokenStream stream = DjsTokenizer.stream(reference);
+        final TokenStream stream = DjsTokenizer.stream(reference).preserveOutput();
         final TokenStream.Itr iterator = stream.iterator();
 
         assertEquals(number(1, 0, 1), iterator.next());
@@ -213,9 +239,9 @@ public final class TokenStreamTest {
     }
 
     @Test
-    public void skip_toleratesReverseOrder() {
+    public void skip_whenPreservingOutput_toleratesReverseOrder() {
         final String reference = "1 2 3";
-        final TokenStream stream = DjsTokenizer.stream(reference);
+        final TokenStream stream = DjsTokenizer.stream(reference).preserveOutput();
         final TokenStream.Itr iterator = stream.iterator();
 
         assertEquals(number(1, 0, 1), iterator.next());

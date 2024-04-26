@@ -231,7 +231,7 @@ public final class DjsTokenizerTest {
                     token(TokenType.WORD, 1, 6),
                     symbol(',', 6, 7),
                     token(TokenType.WORD, 7, 12))),
-            DjsTokenizer.containerize(reference).readToEnd());
+            containerize(reference));
     }
 
     @Test
@@ -250,7 +250,7 @@ public final class DjsTokenizerTest {
                         7,
                         14,
                         token(TokenType.WORD, 8, 13)))),
-            DjsTokenizer.containerize(reference).readToEnd());
+            containerize(reference));
     }
 
     @Test
@@ -268,7 +268,7 @@ public final class DjsTokenizerTest {
                     token(TokenType.WORD, 1, 6),
                     symbol(',', 6, 7),
                     token(TokenType.WORD, 7, 12))),
-            DjsTokenizer.containerize(reference).readToEnd());
+            containerize(reference));
     }
 
     @Test
@@ -282,7 +282,7 @@ public final class DjsTokenizerTest {
 
     @Test
     public void stream_returnsLazilyEvaluatedTokens() {
-        final TokenStream stream = DjsTokenizer.stream("1234");
+        final TokenStream stream = DjsTokenizer.stream("1234").preserveOutput();
         stream.iterator().next();
         assertEquals(1, stream.source.size());
     }
@@ -330,6 +330,10 @@ public final class DjsTokenizerTest {
     private static Token container(
             final TokenType type, final int s, final int e, final Token... tokens) {
         return new TokenStream(s, e, 0, 0, s, type, List.of(tokens));
+    }
+
+    private static Token containerize(final String reference) {
+        return DjsTokenizer.containerize(reference).preserveOutput().readToEnd();
     }
 
     private static int lines(final String reference) {

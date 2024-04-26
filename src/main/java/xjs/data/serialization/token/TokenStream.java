@@ -124,6 +124,10 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
      * output will be visible to callers using {@link #stringify} and
      * {@link #viewTokens}.
      *
+     * <p>In general, it should be unnecessary to preserve tokens, but
+     * this may enable some optimizations and is especially useful in
+     * testing.
+     *
      * @return <code>this</code>, for method chaining.
      */
     public TokenStream preserveOutput() {
@@ -158,16 +162,16 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
         return this.stringify(1, true);
     }
 
-    protected String stringify(final int level, final boolean readToEnd) {
-        if (readToEnd) {
-            this.readToEnd();
-        }
+    protected synchronized String stringify(final int level, final boolean readToEnd) {
         final StringBuilder sb = new StringBuilder("[");
-        final List<Token> copy = new ArrayList<>(this.source);
-        for (final Token token : copy) {
+        final int e = readToEnd ? Integer.MAX_VALUE : this.lastRead + 1;
+        final Itr itr = this.iterator();
+        int idx = this.source.isEmpty() ? this.lastRead + 1 : 0;
+        Token token;
+        while (idx < e && (token = itr.peek(++idx)) != null) {
             this.stringifySingle(sb, token, level, readToEnd);
         }
-        if (this.tokenizer != null || this.source.size() != copy.size()) {
+        if (this.tokenizer != null) {
             this.writeNewLine(sb, level);
             sb.append("<reading...>");
         }
@@ -427,6 +431,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
                 }
                 final int pendingIdx = offset - 1;
                 if (pendingIdx > 0 && pendingIdx < pending.size()) {
+                    // expensive, but acceptable for a lookahead
                     return new ArrayList<>(pending).get(pendingIdx);
                 }
             } else if (!source.isEmpty()) {
@@ -459,7 +464,7 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
                     if (this.closer != '\u0000') {
                         final PositionTrackingReader reader = tokenizer.getReader();
                         throw SyntaxException.expected(
-                                this.closer, reader.line, reader.column);
+                            this.closer, reader.line, reader.column);
                     }
                     tryClose(tokenizer);
                     TokenStream.this.tokenizer = null;
@@ -471,6 +476,9 @@ public class TokenStream extends Token implements Iterable<Token>, Closeable {
                     return null;
                 }
                 if (source != Collections.EMPTY_LIST) {
+                    if (next instanceof TokenStream stream) {
+                        stream.preserveOutput();
+                    }
                     source.add(next);
                 }
                 if (enqueue) {
