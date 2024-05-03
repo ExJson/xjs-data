@@ -477,7 +477,14 @@ public abstract class ElementWriter implements ValueWriter {
             this.tw.write(Long.toString(integer));
             return;
         }
-        String res = BigDecimal.valueOf(decimal).toEngineeringString();
+        String res;
+        if (decimal == Double.POSITIVE_INFINITY) {
+            res = "Infinity";
+        } else if (decimal == Double.NEGATIVE_INFINITY) {
+            res = "-Infinity";
+        } else {
+            res = BigDecimal.valueOf(decimal).toEngineeringString();
+        }
         if (res.endsWith(".0")) {
             res = res.substring(0, res.length() - 2);
         } else if (res.contains("E")) {

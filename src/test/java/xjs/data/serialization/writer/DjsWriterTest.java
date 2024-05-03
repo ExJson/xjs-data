@@ -52,6 +52,12 @@ public final class DjsWriterTest {
     }
 
     @Test
+    public void write_printsInfinity() {
+        assertEquals("Infinity", write(Json.value(Double.POSITIVE_INFINITY)));
+        assertEquals("-Infinity", write(Json.value(Double.NEGATIVE_INFINITY)));
+    }
+
+    @Test
     public void write_printsDecimal() {
         assertEquals("12.34", write(Json.value(12.34)));
     }
