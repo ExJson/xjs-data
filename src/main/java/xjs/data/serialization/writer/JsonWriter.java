@@ -34,20 +34,11 @@ public class JsonWriter extends ElementWriter {
         final JsonValue value = this.current();
 
         switch (value.getType()) {
-            case OBJECT:
-                this.writeObject();
-                break;
-            case ARRAY:
-                this.writeArray();
-                break;
-            case NUMBER:
-                this.writeNumber(value.asDouble());
-                break;
-            case STRING:
-                this.writeQuoted(value.asString(), '"');
-                break;
-            default:
-                this.tw.write(value.toString());
+            case OBJECT -> this.writeObject();
+            case ARRAY -> this.writeArray();
+            case NUMBER -> this.writeNumber(value.asDouble());
+            case STRING -> this.writeQuoted(value.asString(), '"');
+            default -> this.tw.write(value.toString());
         }
     }
 

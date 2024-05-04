@@ -532,15 +532,15 @@ public abstract class ElementWriter implements ValueWriter {
         if (c == quote) {
             return "\\" + quote;
         }
-        switch (c) {
-            case '\t': return "\\t";
-            case '\n': return "\\n";
-            case '\r': return "\\r";
-            case '\f': return "\\f";
-            case '\b': return "\\b";
-            case '\\': return "\\\\";
-            default: return null;
-        }
+        return switch (c) {
+            case '\t' -> "\\t";
+            case '\n' -> "\\n";
+            case '\r' -> "\\r";
+            case '\f' -> "\\f";
+            case '\b' -> "\\b";
+            case '\\' -> "\\\\";
+            default -> null;
+        };
     }
 
     protected void writeMulti(final String value) throws IOException {
