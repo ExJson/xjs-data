@@ -142,7 +142,7 @@ public class JsonParser implements ValueParser {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         this.reader.close();
     }
 }

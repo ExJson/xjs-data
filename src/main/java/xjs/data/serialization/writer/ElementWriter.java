@@ -635,7 +635,7 @@ public abstract class ElementWriter implements ValueWriter {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         this.tw.close();
     }
 }

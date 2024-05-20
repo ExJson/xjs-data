@@ -47,12 +47,12 @@ public class PerformanceTest {
          *  ASLDKFMAPLIWJQ0398WJAOPSIDFJPOAWIERA;LWIERU:lzDIFU;er
          *
          */
-         
-         
+        
+        
         // never gonna
-         
+        
         # give
-         
+        
         // you
         
         # a banana
@@ -124,11 +124,15 @@ public class PerformanceTest {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public boolean containerizedIsBalanced() {
-        try {
-            DjsTokenizer.containerize(generateNormallyDistributedSample()).readToEnd();
+        try (final TokenStream stream =
+                 DjsTokenizer.containerize(generateNormallyDistributedSample())) {
+            stream.readToEnd();
             return true;
-        } catch (final SyntaxException ignored) {}
-        return false;
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        } catch (final SyntaxException ignored) {
+            return false;
+        }
     }
 
     private static String generateNormallyDistributedSample() {
@@ -139,14 +143,48 @@ public class PerformanceTest {
         }
     }
 
-    @Enabled(true)
+    @Enabled(false)
     @Benchmark
     @Fork(2)
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public JsonValue djsParsingSample() {
-        return new DjsParser(SIMPLE_DJS_SAMPLE).parse();
+        try (final DjsParser parser = new DjsParser(SIMPLE_DJS_SAMPLE)) {
+            return parser.parse();
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
+    }
+
+    @Enabled(true)
+    @Benchmark
+    @Fork(2)
+    @Threads(4)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public String djsWritingSample() {
+        try (final StringWriter sw = new StringWriter();
+                final DjsWriter writer = new DjsWriter(sw, true)) {
+            writer.write(DJS_WRITING_SAMPLE);
+            return sw.toString();
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
+    }
+
+    @Enabled(true)
+    @Benchmark
+    @Fork(2)
+    @Threads(4)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public JsonValue jsonParsingSample() {
+        try (final JsonParser parser = new JsonParser(JSON_SAMPLE)) {
+            return parser.parse();
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
     }
 
     @Enabled(false)
@@ -155,10 +193,14 @@ public class PerformanceTest {
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String djsWritingSample() throws IOException {
-        final StringWriter sw = new StringWriter();
-        new DjsWriter(sw, true).write(DJS_WRITING_SAMPLE);
-        return sw.toString();
+    public String jsonWritingSample() {
+        try (final StringWriter sw = new StringWriter();
+             final JsonWriter writer = new JsonWriter(sw, true)) {
+            writer.write(DJS_WRITING_SAMPLE);
+            return sw.toString();
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
     }
 
     @Enabled(false)
@@ -167,8 +209,13 @@ public class PerformanceTest {
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public JsonValue jsonParsingSample() throws IOException {
-        return new JsonParser(JSON_SAMPLE).parse();
+    public String stringReaderSample() {
+        try (final PositionTrackingReader reader =
+                 PositionTrackingReader.fromString(READER_INPUT_SAMPLE)) {
+            return reader.readToEnd();
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
     }
 
     @Enabled(false)
@@ -177,10 +224,13 @@ public class PerformanceTest {
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String jsonWritingSample() throws IOException {
-        final StringWriter sw = new StringWriter();
-        new JsonWriter(sw, true).write(JSON_WRITING_SAMPLE);
-        return sw.toString();
+    public String byteBufferSample_smallestBuffer() {
+        try (final PositionTrackingReader reader =
+                new ExperimentalInputStreamByteReader(getReadingSampleIS(), 8, true)) {
+            return reader.readToEnd();
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
     }
 
     @Enabled(false)
@@ -189,31 +239,13 @@ public class PerformanceTest {
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String stringReaderSample() throws IOException {
-        return PositionTrackingReader.fromString(
-            READER_INPUT_SAMPLE).readToEnd();
-    }
-
-    @Enabled(false)
-    @Benchmark
-    @Fork(2)
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String byteBufferSample_smallestBuffer() throws IOException {
-        return new ExperimentalInputStreamByteReader(
-            getReadingSampleIS(), 8, true).readToEnd();
-    }
-
-    @Enabled(false)
-    @Benchmark
-    @Fork(2)
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String byteBufferSample_mediumBuffer() throws IOException {
-        return new ExperimentalInputStreamByteReader(
-            getReadingSampleIS(), 128, true).readToEnd();
+    public String byteBufferSample_mediumBuffer() {
+        try (final PositionTrackingReader reader =
+                 new ExperimentalInputStreamByteReader(getReadingSampleIS(), 128, true)) {
+            return reader.readToEnd();
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
     }
 
     @Enabled(false)
@@ -223,59 +255,12 @@ public class PerformanceTest {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public String byteBufferSample_normalBuffer() throws IOException {
-        return new ExperimentalInputStreamByteReader(
-            getReadingSampleIS(), 1024, true).readToEnd();
-    }
-
-    @Enabled(false)
-    @Benchmark
-    @Fork(2)
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String charBufferSample_smallestBuffer() throws IOException {
-        return PositionTrackingReader.fromIs(
-            getReadingSampleIS(), 8, true).readToEnd();
-    }
-
-    @Enabled(false)
-    @Benchmark
-    @Fork(2)
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String charBufferSample_mediumBuffer() throws IOException {
-        return PositionTrackingReader.fromIs(
-            getReadingSampleIS(), 128, true).readToEnd();
-    }
-
-    @Enabled(false)
-    @Benchmark
-    @Fork(2)
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public String charBufferSample_normalBuffer() throws IOException {
-        return PositionTrackingReader.fromIs(
-            getReadingSampleIS(), 1024, true).readToEnd();
-    }
-
-    @Enabled(false)
-    @Benchmark
-    @Fork(2)
-    @Threads(4)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public TokenStream stream_fromStandardReader() throws IOException {
-        final Reader reader =
-            new InputStreamReader(getReadingSampleIS());
-        final StringBuilder sb = new StringBuilder();
-        final char[] buffer = new char[1024];
-        int bytesRead;
-        while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
-            sb.append(buffer, 0, bytesRead);
+        try (final PositionTrackingReader reader =
+                 new ExperimentalInputStreamByteReader(getReadingSampleIS(), 1024, true)) {
+            return reader.readToEnd();
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
         }
-        return DjsTokenizer.stream(sb.toString());
     }
 
     @Enabled(false)
@@ -284,10 +269,78 @@ public class PerformanceTest {
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public TokenStream stream_fromPositionTrackingReader() throws IOException {
-        final PositionTrackingReader reader =
-            PositionTrackingReader.fromIs(getReadingSampleIS());
-        return DjsTokenizer.stream(reader.readToEnd());
+    public String charBufferSample_smallestBuffer() {
+        try (final PositionTrackingReader reader =
+                 PositionTrackingReader.fromIs(getReadingSampleIS(), 8, true)) {
+            return reader.readToEnd();
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
+    }
+
+    @Enabled(false)
+    @Benchmark
+    @Fork(2)
+    @Threads(4)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public String charBufferSample_mediumBuffer() {
+        try (final PositionTrackingReader reader =
+                 PositionTrackingReader.fromIs(getReadingSampleIS(), 128, true)) {
+            return reader.readToEnd();
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
+    }
+
+    @Enabled(false)
+    @Benchmark
+    @Fork(2)
+    @Threads(4)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public String charBufferSample_normalBuffer() {
+        try (final PositionTrackingReader reader =
+                 PositionTrackingReader.fromIs(getReadingSampleIS(), 1024, true)) {
+            return reader.readToEnd();
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
+    }
+
+    @Enabled(false)
+    @Benchmark
+    @Fork(2)
+    @Threads(4)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public TokenStream stream_fromStandardReader() {
+        try (final Reader reader = new InputStreamReader(getReadingSampleIS())) {
+            final StringBuilder sb = new StringBuilder();
+            final char[] buffer = new char[1024];
+            int bytesRead;
+            while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
+                sb.append(buffer, 0, bytesRead);
+            }
+            return DjsTokenizer.stream(sb.toString());
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
+    }
+
+    @Enabled(false)
+    @Benchmark
+    @Fork(2)
+    @Threads(4)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public TokenStream stream_fromPositionTrackingReader() {
+        try (final PositionTrackingReader reader =
+                 PositionTrackingReader.fromIs(getReadingSampleIS())) {
+            return DjsTokenizer.stream(reader.readToEnd());
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
+        }
     }
 
     @Enabled(false)
@@ -308,18 +361,20 @@ public class PerformanceTest {
     @Threads(4)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public TokenStream stream_fromStringReader() throws IOException {
-        final Reader reader =
-            new InputStreamReader(getReadingSampleIS());
-        final StringBuilder sb = new StringBuilder();
-        final char[] buffer = new char[1024];
-        int bytesRead;
-        while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
-            sb.append(buffer, 0, bytesRead);
+    public TokenStream stream_fromStringReader() {
+        try (final Reader reader = new InputStreamReader(getReadingSampleIS())) {
+            final StringBuilder sb = new StringBuilder();
+            final char[] buffer = new char[1024];
+            int bytesRead;
+            while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
+                sb.append(buffer, 0, bytesRead);
+            }
+            final TokenStream stream = DjsTokenizer.stream(sb.toString());
+            stream.forEach(t -> {});
+            return stream;
+        } catch (final IOException ignored) {
+            throw new AssertionError("unreachable");
         }
-        final TokenStream stream = DjsTokenizer.stream(sb.toString());
-        stream.forEach(t -> {});
-        return stream;
     }
 
     private static InputStream getReadingSampleIS() {
