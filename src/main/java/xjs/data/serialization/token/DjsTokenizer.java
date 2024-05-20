@@ -66,6 +66,17 @@ public class DjsTokenizer extends Tokenizer {
     }
 
     /**
+     * Generates a lazily-evaluated {@link TokenStream stream of tokens}
+     * wrapping a {@link PositionTrackingReader}.
+     *
+     * @param reader The source of tokens being parsed.
+     * @return A new {@link TokenStream}.
+     */
+    public static TokenStream stream(final PositionTrackingReader reader) {
+        return new TokenStream(new DjsTokenizer(reader, false), TokenType.OPEN);
+    }
+
+    /**
      * Generates a recursive {@link TokenStream} data structure from
      * the given full text.
      *
@@ -86,6 +97,17 @@ public class DjsTokenizer extends Tokenizer {
      */
     public static TokenStream containerize(final InputStream is) throws IOException {
         return new TokenStream(new DjsTokenizer(is, true), TokenType.OPEN);
+    }
+
+    /**
+     * Generates a recursive {@link TokenStream} data structure from
+     * the given source.
+     *
+     * @param reader The source of characters being decoded.
+     * @return A recursive {@link Token} data structure.
+     */
+    public static TokenStream containerize(final PositionTrackingReader reader) {
+        return new TokenStream(new DjsTokenizer(reader, true), TokenType.OPEN);
     }
 
     @Override

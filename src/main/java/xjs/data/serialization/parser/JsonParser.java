@@ -30,6 +30,10 @@ public class JsonParser implements ValueParser {
             new FileInputStream(file), bufferSize, false);
     }
 
+    public JsonParser(final PositionTrackingReader reader) {
+        this.reader = reader;
+    }
+
     public @NotNull JsonValue parse() throws IOException {
         this.reader.skipWhitespace();
         final int linesAbove = this.reader.linesSkipped;

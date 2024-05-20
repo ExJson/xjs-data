@@ -17,6 +17,7 @@ import xjs.data.serialization.token.SymbolToken;
 import xjs.data.serialization.token.Token;
 import xjs.data.serialization.token.TokenStream;
 import xjs.data.serialization.token.TokenType;
+import xjs.data.serialization.util.PositionTrackingReader;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,6 +46,15 @@ public class DjsParser extends CommentedTokenParser {
      */
     public DjsParser(final String text) {
         this(DjsTokenizer.stream(text));
+    }
+
+    /**
+     * Constructs the parser from any {@link PositionTrackingReader}.
+     *
+     * @param reader The source of DJS data.
+     */
+    public DjsParser(final PositionTrackingReader reader) throws IOException {
+        this(DjsTokenizer.stream(reader));
     }
 
     /**
