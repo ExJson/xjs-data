@@ -14,6 +14,8 @@ import xjs.data.serialization.token.CommentToken;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -646,7 +648,7 @@ public final class PositionTrackingReaderTest {
         }
 
         List<PositionTrackingReader> getAllReaders() {
-            return List.of(this.getStringReader(), this.getCharBufferedReader());
+            return List.of(this.getStringReader(), this.getCharBufferedReader(), this.getReaderReader());
         }
 
         PositionTrackingReader getStringReader() {
@@ -663,6 +665,18 @@ public final class PositionTrackingReaderTest {
 
         InputStream getInputStream() {
             return new ByteArrayInputStream(this.text.getBytes(StandardCharsets.UTF_8));
+        }
+
+        PositionTrackingReader getReaderReader() {
+            try {
+                return PositionTrackingReader.fromReader(this.getReader(), this.bufferSize, true);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+
+        Reader getReader() {
+            return new StringReader(this.text);
         }
     }
 }

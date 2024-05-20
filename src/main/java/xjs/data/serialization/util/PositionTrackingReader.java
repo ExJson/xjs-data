@@ -83,7 +83,7 @@ public abstract class PositionTrackingReader implements Closeable {
      * @throws IOException If the initial read operation fails.
      */
     public static PositionTrackingReader fromIs(final InputStream is) throws IOException {
-        return new DirectInputStreamReader(is, DEFAULT_BUFFER_SIZE, false);
+        return fromIs(is, false);
     }
 
     /**
@@ -99,7 +99,7 @@ public abstract class PositionTrackingReader implements Closeable {
      */
     public static PositionTrackingReader fromIs(
             final InputStream is, final boolean captureFullText) throws IOException {
-        return new DirectInputStreamReader(is, DEFAULT_BUFFER_SIZE, captureFullText);
+        return fromIs(is, DEFAULT_BUFFER_SIZE, captureFullText);
     }
 
     /**
@@ -114,10 +114,57 @@ public abstract class PositionTrackingReader implements Closeable {
      */
     public static PositionTrackingReader fromIs(
             final InputStream is, final int size, final boolean captureFullText) throws IOException {
+        return fromReader(new InputStreamReader(is, StandardCharsets.UTF_8), size, captureFullText);
+    }
+
+    /**
+     * Generates a reader optimized for {@link Reader}s and disk IO.
+     *
+     * <p>Unlike {@link Reader}, users should be aware that read calls
+     * are <b>not synchronized</b>. This utility is <b>not thread safe</b>,
+     * does not flush the underlying {@link InputStream}, and deliberately
+     * dodges some of the {@link Reader} API contract.
+     *
+     * @param reader The source of characters being iterated over.
+     * @return A new reader for parsers and tokenizers.
+     * @throws IOException If the initial read operation fails.
+     */
+    public static PositionTrackingReader fromReader(final Reader reader) throws IOException {
+        return fromReader(reader, false);
+    }
+
+    /**
+     * Variant of {@link #fromReader(Reader)} specifying whether to capture
+     * the full text of the input. This text can be returned at any point
+     * by calling {@link #getFullText}. Callers should be aware that the
+     * text output <em>will</em> change as the reader progresses.
+     *
+     * @param reader          The source of characters being iterated over.
+     * @param captureFullText Whether to preserve the full text input.
+     * @return A new reader for parsers and tokenizers.
+     * @throws IOException If the initial read operation fails.
+     */
+    public static PositionTrackingReader fromReader(
+            final Reader reader, final boolean captureFullText) throws IOException {
+        return fromReader(reader, DEFAULT_BUFFER_SIZE, captureFullText);
+    }
+
+    /**
+     * Variant of {@link #fromReader(Reader, boolean)} specifying the size
+     * of the buffer used by the reader.
+     *
+     * @param reader          The source of characters being iterated over.
+     * @param size            The size of the underlying character buffer.
+     * @param captureFullText Whether to preserve the full text input.
+     * @return A new reader for parsers and tokenizers.
+     * @throws IOException If the initial read operation fails.
+     */
+    public static PositionTrackingReader fromReader(
+            final Reader reader, final int size, final boolean captureFullText) throws IOException {
         if (size < MIN_BUFFER_SIZE) {
             throw new IllegalArgumentException("buffer size < " + MIN_BUFFER_SIZE);
         }
-        return new DirectInputStreamReader(is, size, captureFullText);
+        return new ReaderReader(reader, size, captureFullText);
     }
 
     /**
@@ -755,17 +802,17 @@ public abstract class PositionTrackingReader implements Closeable {
         return SyntaxException.unexpected(unexpected, this.line, this.column);
     }
 
-    private static class DirectInputStreamReader extends PositionTrackingReader {
-        final InputStreamReader reader;
+    private static class ReaderReader extends PositionTrackingReader {
+        final Reader reader;
         final char[] buffer;
 
         StringBuilder out;
         int bufferIndex;
         int fill;
 
-        DirectInputStreamReader(
-                final InputStream is, final int size, final boolean captureFullText) throws IOException {
-            this.reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+        ReaderReader(
+                final Reader reader, final int size, final boolean captureFullText) throws IOException {
+            this.reader = reader;
             this.buffer = new char[size];
             this.bufferIndex = 0;
             this.fill = 0;
