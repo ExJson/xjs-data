@@ -191,7 +191,7 @@ public abstract class PositionTrackingReader implements Closeable {
 
     protected abstract void appendToCapture();
 
-    protected abstract String slice();
+    protected abstract String slice(final int s, final int e);
 
     /**
      * Advances the reader by a single character.
@@ -283,24 +283,21 @@ public abstract class PositionTrackingReader implements Closeable {
     /**
      * Terminates the capture, generating new string value from the contents.
      *
-     * @param idx The last index to include in the capture.
+     * @param e The last index to include in the capture.
      * @return The full text of the capture buffer.
      */
-    public String endCapture(final int idx) {
+    public String endCapture(final int e) {
         final String captured;
         if (this.capture.length() > 0) {
             this.appendToCapture();
-            if (idx < this.index) {
+            if (e < this.index) {
                 this.capture.setLength(
-                    this.capture.length() - (this.index - idx));
+                    this.capture.length() - (this.index - e));
             }
             captured = this.capture.toString();
             this.capture.setLength(0);
         } else {
-            final int tmp = this.index;
-            this.index = idx;
-            captured = this.slice();
-            this.index = tmp;
+            captured = this.slice(this.captureStart, e);
         }
         this.captureStart = -1;
         return captured;
@@ -847,9 +844,8 @@ public abstract class PositionTrackingReader implements Closeable {
         }
 
         @Override
-        protected String slice() {
-            final int end = this.current == -1 ? this.bufferIndex : this.bufferIndex - 1;
-            return new String(this.buffer, this.captureStart, end - this.captureStart);
+        protected String slice(final int s, final int e) {
+            return new String(this.buffer, s, e - s);
         }
 
         @Override
@@ -934,8 +930,8 @@ public abstract class PositionTrackingReader implements Closeable {
         }
 
         @Override
-        protected String slice() {
-            return this.s.substring(this.captureStart, this.index);
+        protected String slice(final int s, final int e) {
+            return this.s.substring(s, e);
         }
 
         @Override

@@ -549,6 +549,20 @@ public final class PositionTrackingReaderTest {
     }
 
     @Test
+    public void readLineComment_doesNotCapture_carriageReturns() throws IOException {
+        final String text = "//comment\r\n";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            final CommentToken comment = reader.readLineComment();
+            assertEquals(CommentStyle.LINE, comment.commentStyle());
+            assertEquals("comment", comment.parsed());
+        }
+    }
+
+    @Test
     public void readHashComment_capturesCommentText() throws IOException {
         final String text = "#comment";
         final Sample sample = new Sample(text, NORMAL_BUFFER);
