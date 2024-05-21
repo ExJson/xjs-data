@@ -191,8 +191,6 @@ public abstract class PositionTrackingReader implements Closeable {
 
     protected abstract void appendToCapture();
 
-    protected abstract String slice(final int s, final int e);
-
     /**
      * Advances the reader by a single character.
      *
@@ -287,18 +285,12 @@ public abstract class PositionTrackingReader implements Closeable {
      * @return The full text of the capture buffer.
      */
     public String endCapture(final int e) {
-        final String captured;
-        if (this.capture.length() > 0) {
-            this.appendToCapture();
-            if (e < this.index) {
-                this.capture.setLength(
-                    this.capture.length() - (this.index - e));
-            }
-            captured = this.capture.toString();
-            this.capture.setLength(0);
-        } else {
-            captured = this.slice(this.captureStart, e);
+        this.appendToCapture();
+        if (e < this.index) {
+            this.capture.setLength(this.capture.length() - (this.index - e));
         }
+        final String captured = this.capture.toString();
+        this.capture.setLength(0);
         this.captureStart = -1;
         return captured;
     }
@@ -844,11 +836,6 @@ public abstract class PositionTrackingReader implements Closeable {
         }
 
         @Override
-        protected String slice(final int s, final int e) {
-            return new String(this.buffer, s, e - s);
-        }
-
-        @Override
         public int peek() throws IOException {
             if (this.current == -1) {
                 return -1;
@@ -927,11 +914,6 @@ public abstract class PositionTrackingReader implements Closeable {
         @Override
         protected void appendToCapture() {
             this.capture.append(this.s, this.captureStart, this.index);
-        }
-
-        @Override
-        protected String slice(final int s, final int e) {
-            return this.s.substring(s, e);
         }
 
         @Override

@@ -53,11 +53,6 @@ public class ExperimentalInputStreamByteReader extends PositionTrackingReader {
     }
 
     @Override
-    protected String slice(final int s, final int e) {
-        return new String(this.buffer, s, e, StandardCharsets.UTF_8);
-    }
-
-    @Override
     public int peek() {
         return -1;
     }
