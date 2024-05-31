@@ -57,11 +57,11 @@ public class JsonLiteral extends JsonValue {
 
     @Override
     public boolean asBoolean() {
-        switch (this.value) {
-            case TRUE: return true;
-            case FALSE: return false;
-            default: return super.asBoolean();
-        }
+        return switch (this.value) {
+            case TRUE -> true;
+            case FALSE -> false;
+            default -> super.asBoolean();
+        };
     }
 
     @Override

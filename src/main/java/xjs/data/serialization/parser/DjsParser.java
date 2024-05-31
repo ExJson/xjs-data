@@ -6,6 +6,7 @@ import xjs.data.comments.CommentType;
 import xjs.data.Json;
 import xjs.data.JsonArray;
 import xjs.data.JsonLiteral;
+import xjs.data.JsonNumber;
 import xjs.data.JsonObject;
 import xjs.data.JsonString;
 import xjs.data.JsonValue;
@@ -257,6 +258,8 @@ public class DjsParser extends CommentedTokenParser {
         }
         final String text = t.parsed();
         return switch (text) {
+            case "Infinity" -> new JsonNumber(Double.POSITIVE_INFINITY);
+            case "-Infinity" -> new JsonNumber(Double.NEGATIVE_INFINITY);
             case "true" -> JsonLiteral.jsonTrue();
             case "false" -> JsonLiteral.jsonFalse();
             case "null" -> JsonLiteral.jsonNull();
