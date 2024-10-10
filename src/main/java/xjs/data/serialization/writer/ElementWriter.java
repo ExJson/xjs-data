@@ -477,7 +477,14 @@ public abstract class ElementWriter implements ValueWriter {
             this.tw.write(Long.toString(integer));
             return;
         }
-        String res = BigDecimal.valueOf(decimal).toEngineeringString();
+        String res;
+        if (decimal == Double.POSITIVE_INFINITY) {
+            res = "infinity";
+        } else if (decimal == Double.NEGATIVE_INFINITY) {
+            res = "-infinity";
+        } else {
+            res = BigDecimal.valueOf(decimal).toEngineeringString();
+        }
         if (res.endsWith(".0")) {
             res = res.substring(0, res.length() - 2);
         } else if (res.contains("E")) {
@@ -525,15 +532,15 @@ public abstract class ElementWriter implements ValueWriter {
         if (c == quote) {
             return "\\" + quote;
         }
-        switch (c) {
-            case '\t': return "\\t";
-            case '\n': return "\\n";
-            case '\r': return "\\r";
-            case '\f': return "\\f";
-            case '\b': return "\\b";
-            case '\\': return "\\\\";
-            default: return null;
-        }
+        return switch (c) {
+            case '\t' -> "\\t";
+            case '\n' -> "\\n";
+            case '\r' -> "\\r";
+            case '\f' -> "\\f";
+            case '\b' -> "\\b";
+            case '\\' -> "\\\\";
+            default -> null;
+        };
     }
 
     protected void writeMulti(final String value) throws IOException {
