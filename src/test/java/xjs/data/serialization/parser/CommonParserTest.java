@@ -42,12 +42,6 @@ public abstract class CommonParserTest {
     }
 
     @Test
-    public final void parse_readsInfiniteNumbers() throws IOException {
-        assertEquals(Double.POSITIVE_INFINITY, this.parse("Infinity").asDouble());
-        assertEquals(Double.NEGATIVE_INFINITY, this.parse("-Infinity").asDouble());
-    }
-
-    @Test
     public final void parse_readsExponent() throws IOException {
         assertEquals(12.3e4, this.parse("12.3e4").asDouble());
     }

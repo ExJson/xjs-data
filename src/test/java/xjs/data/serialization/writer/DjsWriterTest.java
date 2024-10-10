@@ -53,8 +53,8 @@ public final class DjsWriterTest {
 
     @Test
     public void write_printsInfiniteNumbers() {
-        assertEquals("Infinity", write(Json.value(Double.POSITIVE_INFINITY)));
-        assertEquals("-Infinity", write(Json.value(Double.NEGATIVE_INFINITY)));
+        assertEquals("infinity", write(Json.value(Double.POSITIVE_INFINITY)));
+        assertEquals("-infinity", write(Json.value(Double.NEGATIVE_INFINITY)));
     }
 
     @Test

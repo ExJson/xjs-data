@@ -479,9 +479,9 @@ public abstract class ElementWriter implements ValueWriter {
         }
         String res;
         if (decimal == Double.POSITIVE_INFINITY) {
-            res = "Infinity";
+            res = "infinity";
         } else if (decimal == Double.NEGATIVE_INFINITY) {
-            res = "-Infinity";
+            res = "-infinity";
         } else {
             res = BigDecimal.valueOf(decimal).toEngineeringString();
         }

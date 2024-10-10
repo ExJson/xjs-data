@@ -214,6 +214,9 @@ public abstract class Tokenizer implements Closeable {
         } else if (reader.current == '-') {
             reader.read();
             if (!reader.isDigit()) {
+                if (reader.readInfinity()) {
+                    return this.newNumberToken(reader.endCapture(), Double.NEGATIVE_INFINITY);
+                }
                 reader.invalidateCapture();
                 return this.newSymbolToken('-');
             }

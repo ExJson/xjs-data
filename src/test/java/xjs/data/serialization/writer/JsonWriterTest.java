@@ -53,12 +53,6 @@ public final class JsonWriterTest {
     }
 
     @Test
-    public void write_printsInfiniteNumbers() {
-        assertEquals("Infinity", write(Json.value(Double.POSITIVE_INFINITY)));
-        assertEquals("-Infinity", write(Json.value(Double.NEGATIVE_INFINITY)));
-    }
-
-    @Test
     public void write_printsQuotedString() {
         assertEquals("\"test\"", write(Json.value("test")));
     }

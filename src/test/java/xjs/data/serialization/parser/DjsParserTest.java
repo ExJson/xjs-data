@@ -38,6 +38,14 @@ public final class DjsParserTest extends CommonParserTest {
     }
 
     @Test
+    public void parse_readsInfiniteNumbers() {
+        assertEquals(Double.POSITIVE_INFINITY, this.parse("infinity").asDouble());
+        assertEquals(Double.NEGATIVE_INFINITY, this.parse("-infinity").asDouble());
+
+        assertThrows(SyntaxException.class, () -> this.parse("-infinityy"));
+    }
+
+    @Test
     public void parse_readsOpenRoot() {
         assertTrue(new JsonObject().add("a", 1).add("b", 2)
             .matches(this.parse("a:1,b:2")));
