@@ -156,7 +156,7 @@ public class JsonContext {
      * @return The default {@link JsonWriterOptions}.
      */
     public static synchronized JsonWriterOptions getDefaultFormatting() {
-        return new JsonWriterOptions(defaultFormatting);
+        return defaultFormatting;
     }
 
     /**
@@ -190,7 +190,7 @@ public class JsonContext {
      * @throws SyntaxException If the contents of the file are syntactically invalid.
      */
     public static JsonValue autoParse(final File file) throws IOException {
-        return PARSERS.getOrDefault(getFormat(file), DEFAULT_PARSER).parse(file);
+        return getParser(getExtension(file)).parse(file);
     }
 
     /**
@@ -203,11 +203,36 @@ public class JsonContext {
      * @throws IOException If the underlying {@link FileWriter} throws an exception.
      */
     public static void autoWrite(final File file, final JsonValue value) throws IOException {
-        WRITERS.getOrDefault(getFormat(file), DEFAULT_WRITER).write(file, value, defaultFormatting);
+        getWriter(getExtension(file)).write(file, value, defaultFormatting);
     }
 
-    private static String getFormat(final File file) {
-        final String ext = getExtension(file);
+    /**
+     * Gets a parsing function for the given format. This method provides
+     * a utility which allows the caller to parse from a variety of sources.
+     *
+     * @param ext The data type, with support for aliases.
+     * @return An interface used for parsing JSON data from various sources.
+     */
+    public static ParsingFunction getParser(final String ext) {
+        return PARSERS.getOrDefault(getFormat(ext), DEFAULT_PARSER);
+    }
+
+    /**
+     * Gets a writing function for the given format. This method provides
+     * a utility which allows the caller to output to a variety sources.
+     *
+     * @param ext The data type, with support for aliases.
+     * @return An interface used for writing JSON data to various sources.
+     */
+    public static WritingFunction getWriter(final String ext) {
+        return WRITERS.getOrDefault(getFormat(ext), DEFAULT_WRITER);
+    }
+
+    private static String getFormat(final File file) {;
+        return getFormat(getExtension(file));
+    }
+
+    private static String getFormat(final String ext) {
         return ALIASES.getOrDefault(ext, ext);
     }
 

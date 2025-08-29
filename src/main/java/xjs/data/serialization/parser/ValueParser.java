@@ -3,6 +3,7 @@ package xjs.data.serialization.parser;
 import org.jetbrains.annotations.NotNull;
 import xjs.data.JsonValue;
 import xjs.data.exception.SyntaxException;
+import xjs.data.serialization.util.PositionTrackingReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,15 +26,15 @@ public interface ValueParser extends AutoCloseable {
      * The expected constructor to be used when reading values
      * from the disk.
      */
-    interface FileConstructor {
+    interface ReaderConstructor {
 
         /**
-         * Builds a ValueParser when given a file to read from.
+         * Builds a ValueParser when given a reader to read from.
          *
-         * @param file The file being deserialized.
+         * @param reader The source of data being deserialized.
          * @return A new {@link ValueParser}.
          * @throws IOException If an error occurs when opening the file.
          */
-        ValueParser construct(final File file) throws IOException;
+        ValueParser construct(final PositionTrackingReader reader) throws IOException;
     }
 }

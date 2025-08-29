@@ -17,20 +17,20 @@ import java.util.Arrays;
  */
 public class JsonWriterOptions {
 
-    private boolean allowCondense = true;
-    private boolean bracesSameLine = true;
-    private boolean nestedSameLine = false;
-    private boolean omitRootBraces = true;
-    private boolean outputComments = true;
-    private boolean omitQuotes = false;
-    private String eol = JsonContext.getEol();
-    private String indent = "  ";
-    private String separator = " ";
-    private int minSpacing = 0;
-    private int maxSpacing = Integer.MAX_VALUE;
-    private int defaultSpacing = 1;
-    private boolean smartSpacing = false;
-    private boolean nextLineMulti = true;
+    private volatile boolean allowCondense = true;
+    private volatile boolean bracesSameLine = true;
+    private volatile boolean nestedSameLine = false;
+    private volatile boolean omitRootBraces = true;
+    private volatile boolean outputComments = true;
+    private volatile boolean omitQuotes = false;
+    private volatile String eol;
+    private volatile String indent = "  ";
+    private volatile String separator = " ";
+    private volatile int minSpacing = 0;
+    private volatile int maxSpacing = Integer.MAX_VALUE;
+    private volatile int defaultSpacing = 1;
+    private volatile boolean smartSpacing = false;
+    private volatile boolean nextLineMulti = true;
 
     /**
      * Construct a new instance with default settings.
@@ -325,6 +325,7 @@ public class JsonWriterOptions {
      * @return The newline character(s) in the JSON output.
      */
     public String getEol() {
+        if (this.eol == null) return JsonContext.getEol();
         return eol;
     }
 

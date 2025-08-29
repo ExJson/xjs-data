@@ -1,9 +1,15 @@
 package xjs.data.serialization.writer;
 
 import xjs.data.JsonValue;
+import xjs.data.serialization.JsonContext;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 
 /**
  * Represents the entire procedure for serializing {@link JsonValue JSON values}
@@ -13,7 +19,45 @@ import java.io.IOException;
 public interface WritingFunction {
 
     /**
+     * Writes a JSON value with default formatting.
+     *
+     * @param tw      The writer handling the output.
+     * @param value   The value being written into the writer.
+     * @throws IOException If an exception is thrown in writing to the file.
+     * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
+     * @see ElementWriter#write(JsonValue)
+     */
+    default void write(final Writer tw, final JsonValue value) throws IOException {
+        this.write(tw, value, JsonContext.getDefaultFormatting());
+    }
+
+    /**
      * The main function being represented by this interface.
+     *
+     * @param tw      The writer handling the output.
+     * @param value   The value being written into the writer.
+     * @param options The options used to indicate output formatting.
+     * @throws IOException If an exception is thrown in writing to the file.
+     * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
+     * @see ElementWriter#write(JsonValue)
+     */
+    void write(final Writer tw, final JsonValue value, final JsonWriterOptions options) throws IOException;
+
+    /**
+     * Writes a JSON value to the given file in this format.
+     *
+     * @param file    The output file where the value will be serialized.
+     * @param value   The value being written into the writer.
+     * @throws IOException If an exception is thrown in writing to the file.
+     * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
+     * @see ElementWriter#write(JsonValue)
+     */
+    default void write(final File file, final JsonValue value) throws IOException {
+        this.write(file, value, JsonContext.getDefaultFormatting());
+    }
+
+    /**
+     * Writes a JSON value to the given file in this format.
      *
      * @param file    The output file where the value will be serialized.
      * @param value   The value being written into the writer.
@@ -22,7 +66,63 @@ public interface WritingFunction {
      * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
      * @see ElementWriter#write(JsonValue)
      */
-    void write(final File file, final JsonValue value, final JsonWriterOptions options) throws IOException;
+    default void write(final File file, final JsonValue value, final JsonWriterOptions options) throws IOException {
+        this.write(new FileWriter(file), value, options);
+    }
+
+    /**
+     * Writes a JSON value to the given OutputStream in this format.
+     *
+     * @param os      The stream consuming the output.
+     * @param value   The value being written into the writer.
+     * @throws IOException If an exception is thrown in writing to the file.
+     * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
+     * @see ElementWriter#write(JsonValue)
+     */
+    default void write(final OutputStream os, final JsonValue value) throws IOException {
+        this.write(os, value, JsonContext.getDefaultFormatting());
+    }
+
+    /**
+     * Writes a JSON value to the given OutputStream in this format.
+     *
+     * @param os      The stream consuming the output.
+     * @param value   The value being written into the writer.
+     * @param options The options used to indicate output formatting.
+     * @throws IOException If an exception is thrown in writing to the file.
+     * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
+     * @see ElementWriter#write(JsonValue)
+     */
+    default void write(final OutputStream os, final JsonValue value, final JsonWriterOptions options) throws IOException {
+        this.write(new OutputStreamWriter(os), value, options);
+    }
+
+    /**
+     * Converts a JSON value to string in this format.
+     *
+     * @param value   The value being written into the writer.
+     * @throws IOException If an exception is thrown in writing to the file.
+     * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
+     * @see ElementWriter#write(JsonValue)
+     */
+    default String stringify(final JsonValue value) throws IOException {
+        return this.stringify(value, JsonContext.getDefaultFormatting());
+    }
+
+    /**
+     * Converts a JSON value to string in this format.
+     *
+     * @param value   The value being written into the writer.
+     * @param options The options used to indicate output formatting.
+     * @throws IOException If an exception is thrown in writing to the file.
+     * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
+     * @see ElementWriter#write(JsonValue)
+     */
+    default String stringify(final JsonValue value, final JsonWriterOptions options) throws IOException {
+        final var sw = new StringWriter();
+        this.write(sw, value, options);
+        return sw.toString();
+    }
 
     /**
      * Builds a WritingFunction when given a reference to the constructor
@@ -31,9 +131,9 @@ public interface WritingFunction {
      * @param c The constructor used to build a {@link ValueWriter}.
      * @return A reusable {@link WritingFunction}.
      */
-    static WritingFunction fromWriter(final ValueWriter.FileConstructor c) {
-        return (file, value, options) -> {
-            final ValueWriter writer = c.construct(file, options);
+    static WritingFunction fromWriter(final ValueWriter.WriterConstructor c) {
+        return (tw, value, options) -> {
+            final ValueWriter writer = c.construct(tw, options);
             writer.write(value);
 
             try {
