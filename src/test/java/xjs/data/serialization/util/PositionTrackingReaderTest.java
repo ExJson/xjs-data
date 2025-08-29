@@ -66,7 +66,7 @@ public final class PositionTrackingReaderTest {
     public void reader_capturesFullText() throws IOException {
         for (final Sample sample : TestData.generateMixedSet()) {
             for (PositionTrackingReader reader : sample.getAllReaders()) {
-                assertEquals(sample.text, reader.readToEnd(),
+                assertEquals(sample.text, reader.capturingFullText().readToEnd(),
                     reader.getClass().getSimpleName());
             }
         }
@@ -671,7 +671,7 @@ public final class PositionTrackingReaderTest {
 
         PositionTrackingReader getCharBufferedReader() {
             try {
-                return PositionTrackingReader.fromIs(this.getInputStream(), this.bufferSize, true);
+                return PositionTrackingReader.fromIs(this.getInputStream(), this.bufferSize, false);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -683,7 +683,7 @@ public final class PositionTrackingReaderTest {
 
         PositionTrackingReader getReaderReader() {
             try {
-                return PositionTrackingReader.fromReader(this.getReader(), this.bufferSize, true);
+                return PositionTrackingReader.fromReader(this.getReader(), this.bufferSize, false);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }

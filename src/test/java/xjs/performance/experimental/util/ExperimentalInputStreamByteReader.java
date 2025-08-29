@@ -48,6 +48,11 @@ public class ExperimentalInputStreamByteReader extends PositionTrackingReader {
     }
 
     @Override
+    public PositionTrackingReader capturingFullText() {
+        return this;
+    }
+
+    @Override
     protected void appendToCapture() {
         this.capture.append(this.charsOut, this.captureStart, this.index);
     }

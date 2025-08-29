@@ -192,6 +192,16 @@ public abstract class PositionTrackingReader implements Closeable {
     protected abstract void appendToCapture();
 
     /**
+     * Generates a new reader that forcibly captures the full input.
+     *
+     * <p>This method is only guaranteed to produce a valid output
+     * if the reader has not been used.
+     *
+     * @return A reader configured to capture the full input.
+     */
+    public abstract PositionTrackingReader capturingFullText();
+
+    /**
      * Advances the reader by a single character.
      *
      * @throws IOException If the underlying reader throws an exception.
@@ -822,6 +832,17 @@ public abstract class PositionTrackingReader implements Closeable {
             return this.out != null;
         }
 
+        @Override
+        public PositionTrackingReader capturingFullText() {
+            if (this.out == null) {
+                this.out = new StringBuilder();
+                if (this.fill != -1) {
+                    this.out.append(this.buffer, 0, this.fill);
+                }
+            }
+            return this;
+        }
+
         public void startCapture() {
             if (this.capture == null) {
                 this.capture = new StringBuilder();
@@ -909,6 +930,11 @@ public abstract class PositionTrackingReader implements Closeable {
         @Override
         public boolean isCapturingFullText() {
             return true;
+        }
+
+        @Override
+        public PositionTrackingReader capturingFullText() {
+            return this;
         }
 
         @Override
