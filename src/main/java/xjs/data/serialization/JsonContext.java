@@ -244,7 +244,7 @@ public class JsonContext {
      *
      * @param file  The file being written as some kind of JSON file or superset.
      * @param value The {@link JsonValue} to be represented by the file.
-     * @throws IOException If the underlying {@link FileWriter} throws an exception.
+     * @throws IOException If the underlying {@link Writer} throws an exception.
      */
     public static void autoWrite(final Path file, final JsonValue value) throws IOException {
         getWriter(getExtension(file)).write(file, value, defaultFormatting);
@@ -253,7 +253,7 @@ public class JsonContext {
     /**
      * Writes the given value automatically based on an extension known ahead of time.
      *
-     * <p>This method is the delegate of {@link JsonValue#write(File)}.
+     * <p>This method is the delegate of {@link JsonValue#write(Path)}.
      *
      * @param tw    The output being written as some kind of JSON file or superset.
      * @param value The {@link JsonValue} to be represented by the file.
