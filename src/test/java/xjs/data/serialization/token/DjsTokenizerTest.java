@@ -106,6 +106,38 @@ public final class DjsTokenizerTest {
     }
 
     @Test
+    public void single_parsesDot_withFollowingNumber_asDecimalNumber() {
+        final String reference = ".1234";
+        assertEquals(
+            number(reference, 0.1234),
+            single(reference));
+    }
+
+    @Test
+    public void single_parsesDot_withoutFollowingNumber_asDecimalNumber() {
+        final String reference = ".+1234";
+        assertEquals(
+            symbol(".", '.'),
+            single(reference));
+    }
+
+    @Test
+    public void single_parsesPlus_withFollowingNumber_asPositiveNumber() {
+        final String reference = "+1234";
+        assertEquals(
+            number(reference, 1234),
+            single(reference));
+    }
+
+    @Test
+    public void single_parsesPlus_withoutFollowingNumber_asPositiveNumber() {
+        final String reference = "+.1234";
+        assertEquals(
+            symbol("+", '+'),
+            single(reference));
+    }
+
+    @Test
     public void single_parsesScientificNumber() {
         final String reference = "1234.5E6";
         assertEquals(

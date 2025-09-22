@@ -124,6 +124,26 @@ public final class DjsParserTest extends CommonParserTest {
         assertEquals("0\n 1\n  2", this.parse(text).asObject().getAsserted("multi").asString());
     }
 
+    @Test
+    public void parse_readsLeadingDecimal() {
+        assertEquals(0.1234, this.parse(".1234").asDouble());
+    }
+
+    @Test
+    public void parse_doesNotTolerate_leadingDecimal_withoutFollowingNumber() {
+        assertThrows(SyntaxException.class, () -> this.parse(".+1234"));
+    }
+
+    @Test
+    public void parse_ignoresLeadingPlus() {
+        assertEquals(1234, this.parse("+1234").asDouble());
+    }
+
+    @Test
+    public void parse_doesNotTolerate_leadingPlus_withoutFollowingNumber() {
+        assertThrows(SyntaxException.class, () -> this.parse("+.1234"));
+    }
+
     @ParameterizedTest
     @CsvSource({"/*header*/", "#header", "//header"})
     public void parse_preservesHeaderComment_atTopOfFile(final String comment) {

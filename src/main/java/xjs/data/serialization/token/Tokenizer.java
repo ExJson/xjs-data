@@ -187,14 +187,6 @@ public abstract class Tokenizer implements Closeable {
         return c == '_' || Character.isLetterOrDigit(c);
     }
 
-    protected Token dot() throws IOException {
-        this.reader.read();
-        if (this.reader.isDigit()) {
-            return this.number();
-        }
-        return this.newSymbolToken('.');
-    }
-
     protected Token number() throws IOException {
         final PositionTrackingReader reader = this.reader;
         reader.startCapture();
@@ -211,11 +203,12 @@ public abstract class Tokenizer implements Closeable {
             } else {
                 return this.newNumberToken(reader.endCapture(), 0);
             }
-        } else if (reader.current == '-') {
+        } else if (reader.current == '-' || reader.current == '.' || reader.current == '+') {
+            final char c = (char) reader.current;
             reader.read();
             if (!reader.isDigit()) {
                 reader.invalidateCapture();
-                return this.newSymbolToken('-');
+                return this.newSymbolToken(c);
             }
         }
         reader.readAllDigits();

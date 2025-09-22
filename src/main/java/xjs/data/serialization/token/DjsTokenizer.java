@@ -119,11 +119,10 @@ public class DjsTokenizer extends Tokenizer {
         final char c = (char) this.reader.current;
         this.startReading();
         return switch (c) {
-            case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> this.number();
+            case '-', '+', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> this.number();
             case '/', '#' -> this.comment(c);
             case '\'', '"' -> this.quote(c);
             case '\n' -> this.newLine();
-            case '.' -> this.dot();
             default -> this.word();
         };
     }
