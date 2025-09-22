@@ -23,7 +23,7 @@ public interface WritingFunction {
      *
      * @param tw      The writer handling the output.
      * @param value   The value being written into the writer.
-     * @throws IOException If an exception is thrown in writing to the file.
+     * @throws IOException If an exception is thrown by the writer.
      * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
      * @see ElementWriter#write(JsonValue)
      */
@@ -37,7 +37,7 @@ public interface WritingFunction {
      * @param tw      The writer handling the output.
      * @param value   The value being written into the writer.
      * @param options The options used to indicate output formatting.
-     * @throws IOException If an exception is thrown in writing to the file.
+     * @throws IOException If an exception is thrown by the writer.
      * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
      * @see ElementWriter#write(JsonValue)
      */
@@ -75,7 +75,7 @@ public interface WritingFunction {
      *
      * @param os      The stream consuming the output.
      * @param value   The value being written into the writer.
-     * @throws IOException If an exception is thrown in writing to the file.
+     * @throws IOException If an exception is thrown in writing to the stream.
      * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
      * @see ElementWriter#write(JsonValue)
      */
@@ -89,7 +89,7 @@ public interface WritingFunction {
      * @param os      The stream consuming the output.
      * @param value   The value being written into the writer.
      * @param options The options used to indicate output formatting.
-     * @throws IOException If an exception is thrown in writing to the file.
+     * @throws IOException If an exception is thrown in writing to the stream.
      * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
      * @see ElementWriter#write(JsonValue)
      */
@@ -101,11 +101,10 @@ public interface WritingFunction {
      * Converts a JSON value to string in this format.
      *
      * @param value   The value being written into the writer.
-     * @throws IOException If an exception is thrown in writing to the file.
      * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
      * @see ElementWriter#write(JsonValue)
      */
-    default String stringify(final JsonValue value) throws IOException {
+    default String stringify(final JsonValue value) {
         return this.stringify(value, JsonContext.getDefaultFormatting());
     }
 
@@ -114,13 +113,16 @@ public interface WritingFunction {
      *
      * @param value   The value being written into the writer.
      * @param options The options used to indicate output formatting.
-     * @throws IOException If an exception is thrown in writing to the file.
      * @see ElementWriter#ElementWriter(File, JsonWriterOptions)
      * @see ElementWriter#write(JsonValue)
      */
-    default String stringify(final JsonValue value, final JsonWriterOptions options) throws IOException {
+    default String stringify(final JsonValue value, final JsonWriterOptions options)  {
         final var sw = new StringWriter();
-        this.write(sw, value, options);
+        try {
+            this.write(sw, value, options);
+        } catch (final IOException e) {
+            throw new IllegalStateException("Writer threw unexpected error", e);
+        }
         return sw.toString();
     }
 

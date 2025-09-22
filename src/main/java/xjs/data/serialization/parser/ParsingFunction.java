@@ -7,7 +7,6 @@ import xjs.data.serialization.writer.ValueWriter;
 import xjs.data.serialization.writer.WritingFunction;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
