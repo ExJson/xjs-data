@@ -4,8 +4,6 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 import xjs.data.exception.SyntaxException;
 import xjs.data.serialization.JsonContext;
-import xjs.data.serialization.parser.DjsParser;
-import xjs.data.serialization.token.DjsTokenizer;
 import xjs.data.transform.JsonCollectors;
 
 import java.io.File;
@@ -275,18 +273,30 @@ public final class Json {
     }
 
     /**
-     * Parses a string of JSON, DJS, or JSON-C text, returning a new {@link JsonValue} to
+     * Parses a string of JSON, DJS, or JSONC text, returning a new {@link JsonValue} to
      * represent it.
      *
      * @param djs The raw string contents in JSON, DJS, or JSON-C format.
      * @return A new {@link JsonValue} representing the input.
      */
     public static JsonValue parse(final String djs) {
-        return new DjsParser(djs).parse();
+        return JsonContext.getDefaultParser().parse(djs);
+    }
+    /**
+     * Parses a string of JSON, DJS, or JSONC text, returning a new {@link JsonValue} to
+     * represent it.
+     *
+     * @param format The expected format, e.g. <code>json</code> or <code>djs</code>.
+     * @param djs    The raw string contents in JSON, DJS, or JSON-C format.
+     * @return A new {@link JsonValue} representing the input.
+     */
+    public static JsonValue parse(final String format, final String djs) {
+        return JsonContext.getDefaultParser().parse(djs);
     }
 
+
     /**
-     * Parses a stream of JSON, DJS, or JSON-C text as bytes, returning a new value to
+     * Parses a stream of JSON, DJS, or JSONC text as bytes, returning a new value to
      * represent it.
      *
      * @param djs A reader providing the raw contents  in JSON, DJS, or JSON-C format.
@@ -294,7 +304,7 @@ public final class Json {
      * @throws IOException If any error occurs in reading from the stream.
      */
     public static JsonValue parse(final InputStream djs) throws IOException {
-        return new DjsParser(DjsTokenizer.containerize(djs)).parse();
+        return JsonContext.getDefaultParser().parse(djs);
     }
 
     /**

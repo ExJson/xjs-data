@@ -15,12 +15,9 @@ import xjs.data.serialization.token.NumberToken;
 import xjs.data.serialization.token.StringToken;
 import xjs.data.serialization.token.SymbolToken;
 import xjs.data.serialization.token.Token;
-import xjs.data.serialization.token.TokenStream;
 import xjs.data.serialization.token.TokenType;
 import xjs.data.serialization.util.PositionTrackingReader;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 /**
@@ -30,40 +27,12 @@ import java.io.IOException;
 public class DjsParser extends CommentedTokenParser {
 
     /**
-     * Constructs the parser when given a file in DJS format.
-     *
-     * @param file The file containing DJS data.
-     * @throws IOException If an error occurs when reading the file.
-     */
-    public DjsParser(final File file) throws IOException {
-        this(DjsTokenizer.stream(new FileInputStream(file)));
-    }
-
-    /**
-     * Constructs the parser from raw text data in DJS format.
-     *
-     * @param text The JSON text in DJS format.
-     */
-    public DjsParser(final String text) {
-        this(DjsTokenizer.stream(text));
-    }
-
-    /**
      * Constructs the parser from any {@link PositionTrackingReader}.
      *
      * @param reader The source of DJS data.
      */
-    public DjsParser(final PositionTrackingReader reader) throws IOException {
-        this(DjsTokenizer.stream(reader));
-    }
-
-    /**
-     * Constructs the parser from a know set of tokens in DJS format.
-     *
-     * @param root The root token container.
-     */
-    public DjsParser(final TokenStream root) {
-        super(root);
+    public DjsParser(final PositionTrackingReader reader) {
+        super(new DjsTokenizer(reader, false).stream());
     }
 
     @Override

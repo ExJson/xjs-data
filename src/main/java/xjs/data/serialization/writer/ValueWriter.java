@@ -2,7 +2,6 @@ package xjs.data.serialization.writer;
 
 import xjs.data.JsonValue;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 

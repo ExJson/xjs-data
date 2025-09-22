@@ -3,7 +3,6 @@ package xjs.data.serialization.parser;
 import xjs.data.JsonValue;
 import xjs.data.exception.SyntaxException;
 import xjs.data.serialization.util.PositionTrackingReader;
-import xjs.data.serialization.writer.ValueWriter;
 import xjs.data.serialization.writer.WritingFunction;
 
 import java.io.File;
@@ -11,10 +10,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.UncheckedIOException;
 
 /**
- * Represents an entire procedure for converting {@link File files} into
+ * Represents an entire procedure for converting data into
  * {@link JsonValue JSON values}.
  */
 @FunctionalInterface
@@ -45,7 +43,7 @@ public interface ParsingFunction {
         try {
             return this.parse(PositionTrackingReader.fromString(s));
         } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            throw new IllegalStateException("Parser threw unexpected error", e);
         }
     }
 
@@ -92,10 +90,10 @@ public interface ParsingFunction {
     }
 
     /**
-     * Builds a WritingFunction when given a reference to the constructor
-     * of any {@link ValueWriter}.
+     * Builds a ParsingFunction when given a reference to the constructor
+     * of any {@link ValueParser}.
      *
-     * @param c The constructor used to build a {@link ValueWriter}.
+     * @param c The constructor used to build a {@link ValueParser}.
      * @return A reusable {@link WritingFunction}.
      */
     static ParsingFunction fromParser(final ValueParser.ReaderConstructor c) {

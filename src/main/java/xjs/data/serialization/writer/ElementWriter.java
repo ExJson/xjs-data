@@ -13,8 +13,6 @@ import xjs.data.serialization.JsonContext;
 import xjs.data.serialization.util.BufferedStack;
 import xjs.data.serialization.util.WritingBuffer;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.math.BigDecimal;
@@ -45,8 +43,7 @@ public abstract class ElementWriter implements ValueWriter {
     protected final boolean nextLineMulti;
     protected final String separator;
 
-    protected final BufferedStack.OfTwo<
-        Element, Iterator<? extends Element>> stack;
+    protected final BufferedStack.OfTwo<Element, Iterator<? extends Element>> stack;
     protected Iterator<? extends Element> iterator;
 
     protected Element parent;
@@ -55,50 +52,39 @@ public abstract class ElementWriter implements ValueWriter {
     protected Element peek;
     protected int level;
 
-    protected ElementWriter(final File file, final boolean format) throws IOException {
-        this(new FileWriter(file), format);
-    }
-
-    protected ElementWriter(final Writer writer, final boolean format) {
-        this.format = format;
+    protected ElementWriter(final Writer writer, final @Nullable JsonWriterOptions options) {
+        if (options != null) {
+            this.format = true;
+            this.eol = options.getEol();
+            this.allowCondense = options.isAllowCondense();
+            this.bracesSameLine = options.isBracesSameLine();
+            this.nestedSameLine = options.isNestedSameLine();
+            this.omitRootBraces = options.isOmitRootBraces();
+            this.omitQuotes = options.isOmitQuotes();
+            this.indent = options.getIndent();
+            this.minSpacing = options.getMinSpacing();
+            this.maxSpacing = options.getMaxSpacing();
+            this.defaultSpacing = options.getDefaultSpacing();
+            this.smartSpacing = options.isSmartSpacing();
+            this.nextLineMulti = options.isNextLineMulti();
+            this.separator = options.getSeparator();
+        } else {
+            this.format = false;
+            this.eol = JsonContext.getEol();
+            this.allowCondense = true;
+            this.bracesSameLine = true;
+            this.nestedSameLine = false;
+            this.omitRootBraces = true;
+            this.omitQuotes = true;
+            this.indent = "";
+            this.minSpacing = 0;
+            this.maxSpacing = Integer.MAX_VALUE;
+            this.defaultSpacing = 0;
+            this.smartSpacing = false;
+            this.nextLineMulti = true;
+            this.separator = "";
+        }
         this.tw = new WritingBuffer(writer);
-        this.eol = JsonContext.getEol();
-        this.allowCondense = true;
-        this.bracesSameLine = true;
-        this.nestedSameLine = false;
-        this.omitRootBraces = true;
-        this.omitQuotes = true;
-        this.indent = "  ";
-        this.minSpacing = 0;
-        this.maxSpacing = Integer.MAX_VALUE;
-        this.defaultSpacing = format ? 1 : 0;
-        this.smartSpacing = false;
-        this.nextLineMulti = true;
-        this.separator = format ? " " : "";
-        this.stack = BufferedStack.ofTwo();
-        this.level = 0;
-    }
-
-    protected ElementWriter(final File file, final JsonWriterOptions options) throws IOException {
-        this(new FileWriter(file), options);
-    }
-
-    protected ElementWriter(final Writer writer, final JsonWriterOptions options) {
-        this.format = true;
-        this.tw = new WritingBuffer(writer);
-        this.eol = options.getEol();
-        this.allowCondense = options.isAllowCondense();
-        this.bracesSameLine = options.isBracesSameLine();
-        this.nestedSameLine = options.isNestedSameLine();
-        this.omitRootBraces = options.isOmitRootBraces();
-        this.omitQuotes = options.isOmitQuotes();
-        this.indent = options.getIndent();
-        this.minSpacing = options.getMinSpacing();
-        this.maxSpacing = options.getMaxSpacing();
-        this.defaultSpacing = options.getDefaultSpacing();
-        this.smartSpacing = options.isSmartSpacing();
-        this.nextLineMulti = options.isNextLineMulti();
-        this.separator = options.getSeparator();
         this.stack = BufferedStack.ofTwo();
         this.level = 0;
     }

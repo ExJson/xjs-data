@@ -8,7 +8,6 @@ import xjs.data.JsonArray;
 import xjs.data.JsonObject;
 import xjs.data.JsonValue;
 import xjs.data.serialization.JsonContext;
-import xjs.data.serialization.parser.JsonParser;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -191,7 +190,7 @@ public final class JsonWriterTest {
                 "6": [ 7, 8, 9 ]
               }
             }""";
-        final JsonObject object = new JsonParser(input).parse().asObject();
+        final JsonObject object = Json.parse("json", input).asObject();
         assertEquals(expected, write(object, options));
     }
 
@@ -234,7 +233,7 @@ public final class JsonWriterTest {
               "c": { "": "" },
               "d": [ "", "", "" ]
             }""";
-        assertEquals(expected, write(new JsonParser(expected).parse()));
+        assertEquals(expected, write(Json.parse("json", expected)));
     }
 
     @Test
@@ -275,7 +274,7 @@ public final class JsonWriterTest {
               "f": 6
             }""";
 
-        final JsonValue value = new JsonParser(input).parse().unformatted();
+        final JsonValue value = Json.parse("json", input).unformatted();
         assertEquals(expected, write(value, new JsonWriterOptions().setSmartSpacing(true)));
     }
 
@@ -285,8 +284,7 @@ public final class JsonWriterTest {
     
     private static String write(final JsonValue value, final JsonWriterOptions options) {
         final StringWriter sw = new StringWriter();
-        final JsonWriter writer =
-            options != null ? new JsonWriter(sw, options) : new JsonWriter(sw, false);
+        final JsonWriter writer = new JsonWriter(sw, options);
         try {
             writer.write(value);
         } catch (final Exception e) {

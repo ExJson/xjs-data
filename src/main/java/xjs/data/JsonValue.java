@@ -6,16 +6,12 @@ import xjs.data.comments.CommentHolder;
 import xjs.data.comments.CommentStyle;
 import xjs.data.comments.CommentType;
 import xjs.data.serialization.JsonContext;
-import xjs.data.serialization.writer.JsonWriter;
 import xjs.data.serialization.writer.JsonWriterOptions;
-import xjs.data.serialization.writer.DjsWriter;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.StringWriter;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.Map;
 import java.util.Objects;
@@ -812,13 +808,36 @@ public abstract class JsonValue implements Serializable {
     }
 
     /**
-     * Writes this value into the given writer.
+     * Writes this value into the given writer in DJS format.
      *
      * @param writer The writer being written into.
      * @throws IOException If this writer throws an exception.
      */
     public void write(final Writer writer) throws IOException {
-        new DjsWriter(writer, JsonContext.getDefaultFormatting()).write(this);
+        this.write(writer, "djs");
+    }
+
+    /**
+     * Writes this value into the given writer in the given format.
+     *
+     * @param writer The writer being written into.
+     * @param format The output format, e.g. <code>json</code> or <code>djs</code>.
+     * @throws IOException If this writer throws an exception.
+     */
+    public void write(final Writer writer, final String format) throws IOException {
+        this.write(writer, format, JsonContext.getDefaultFormatting());
+    }
+
+    /**
+     * Writes this value into the given writer.
+     *
+     * @param writer  The writer being written into.
+     * @param format  The output format, e.g. <code>json</code> or <code>djs</code>.
+     * @param options The formatting options, or <code>null</code> for unformatted.
+     * @throws IOException If this writer throws an exception.
+     */
+    public void write(final Writer writer, final String format, final @Nullable JsonWriterOptions options) throws IOException {
+        JsonContext.getWriter(format).write(writer, this, options);
     }
 
     /**
@@ -832,28 +851,17 @@ public abstract class JsonValue implements Serializable {
         if (this.isPrimitive()) {
             return this.unwrap().toString();
         }
-        return this.toString(JsonFormat.JSON);
+        return this.toString("json", null);
     }
 
     /**
      * Converts this value into a string in the given format.
      *
-     * @param format The expected format in which to write this value.
+     * @param format The output format, e.g. <code>json</code> or <code>djs</code>.
      * @return This value as a JSON string, formatted or otherwise.
      */
-    public String toString(final JsonFormat format) {
-        final StringWriter sw = new StringWriter();
-        try {
-            switch (format) {
-                case JSON -> new JsonWriter(sw, false).write(this);
-                case JSON_FORMATTED -> new JsonWriter(sw, true).write(this);
-                case DJS -> new DjsWriter(sw, false).write(this);
-                case DJS_FORMATTED -> new DjsWriter(sw, true).write(this);
-            }
-        } catch (final IOException e) {
-            throw new UncheckedIOException("Encoding error", e);
-        }
-        return sw.toString();
+    public String toString(final String format) {
+        return this.toString(format, JsonContext.getDefaultFormatting());
     }
 
     /**
@@ -862,13 +870,18 @@ public abstract class JsonValue implements Serializable {
      * @param options Formatting options indicating how to output this value.
      * @return This value as a formatted DJS string.
      */
-    public String toString(final JsonWriterOptions options) {
-        final StringWriter sw = new StringWriter();
-        try {
-            new DjsWriter(sw, options).write(this);
-        } catch (final IOException e) {
-            throw new UncheckedIOException("Encoding error", e);
-        }
-        return sw.toString();
+    public String toString(final @Nullable JsonWriterOptions options) {
+        return this.toString("djs", options);
+    }
+
+    /**
+     * Converts this value to an optionally-formatted string using the given options.
+     *
+     * @param format  The output format, e.g. <code>json</code> or <code>djs</code>.
+     * @param options Formatting options indicating how to output this value.
+     * @return This value in the given format, with optional settings applied.
+     */
+    public String toString(final String format, final @Nullable JsonWriterOptions options) {
+        return JsonContext.getWriter(format).stringify(this, options);
     }
 }

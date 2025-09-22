@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import xjs.data.JsonValue;
 import xjs.data.exception.SyntaxException;
 import xjs.data.serialization.JsonContext;
+import xjs.data.serialization.util.PositionTrackingReader;
 
 import java.io.IOException;
 
@@ -49,6 +50,6 @@ public final class JsonParserTest extends CommonParserTest {
 
     @Override
     protected JsonValue parse(final String json) throws IOException {
-        return new JsonParser(json).parse();
+        return new JsonParser(PositionTrackingReader.fromString(json)).parse();
     }
 }

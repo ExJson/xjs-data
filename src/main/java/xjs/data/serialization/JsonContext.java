@@ -189,6 +189,22 @@ public class JsonContext {
     }
 
     /**
+     * Gets the default {@link ParsingFunction parsing function} for handling JSON-like input.
+     * @return The default {@link ParsingFunction parsing function}.
+     */
+    public static ParsingFunction getDefaultParser() {
+        return DEFAULT_PARSER;
+    }
+
+    /**
+     * Gets the default {@link WritingFunction writing function} for handling JSON-like output.
+     * @return The default {@link WritingFunction writing function}.
+     */
+    public static WritingFunction getDefaultWriter() {
+        return DEFAULT_WRITER;
+    }
+
+    /**
      * Indicates whether the given file is extended with a known format or alias.
      *
      * @param file The file being tested.
@@ -202,7 +218,7 @@ public class JsonContext {
     /**
      * Parses the given file automatically based on its extension.
      *
-     * <p>This method is the delegate of {@link Json#parse(File)}.
+     * <p>This method is the delegate of {@link Json#parse(Path)}.
      *
      * @param file The file being parsed as some kind of JSON file or superset.
      * @return The {@link JsonValue} represented by the file.
@@ -224,6 +240,19 @@ public class JsonContext {
      */
     public static void autoWrite(final File file, final JsonValue value) throws IOException {
         getWriter(getExtension(file)).write(file, value, defaultFormatting);
+    }
+
+    /**
+     * Writes the given value automatically based on an extension known ahead of time.
+     *
+     * <p>This method is the delegate of {@link JsonValue#write(File)}.
+     *
+     * @param tw    The output being written as some kind of JSON file or superset.
+     * @param value The {@link JsonValue} to be represented by the file.
+     * @throws IOException If the underlying {@link FileWriter} throws an exception.
+     */
+    public static void autoWrite(final Writer tw, final String extension, final JsonValue value) throws IOException {
+        getWriter(extension).write(tw, value, defaultFormatting);
     }
 
     /**

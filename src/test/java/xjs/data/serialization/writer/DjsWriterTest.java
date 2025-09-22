@@ -259,7 +259,7 @@ public final class DjsWriterTest {
             5: {
               6: [ 7, 8, 9 ]
             }""";
-        final JsonObject object = new DjsParser(input).parse().asObject();
+        final JsonObject object = Json.parse(input).asObject();
         assertEquals(expected, write(object, options));
     }
 
@@ -335,7 +335,7 @@ public final class DjsWriterTest {
             }
             
             b: '})](*&(*%#&)!'""";
-        assertEquals(expected, write(new DjsParser(expected).parse()));
+        assertEquals(expected, write(Json.parse(expected)));
     }
 
     @Test
@@ -455,31 +455,31 @@ public final class DjsWriterTest {
             
             h: 8""";
 
-        final JsonValue value = new DjsParser(input).parse().copy(JsonCopy.UNFORMATTED | JsonCopy.COMMENTS);
+        final JsonValue value = Json.parse(input).copy(JsonCopy.UNFORMATTED | JsonCopy.COMMENTS);
         assertEquals(expected, write(value, new JsonWriterOptions().setSmartSpacing(true)));
     }
 
     @Test
     public void write_withOmitQuotes_doesNotRemoveQuotes_fromSingleLineValues() {
-        final JsonValue value = new DjsParser("k: 'quoted'").parse();
+        final JsonValue value = Json.parse("k: 'quoted'");
         assertEquals("k: 'quoted'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
     }
 
     @Test
     public void write_withOmitQuotes_andUnbalancedValue_doesNotOmitQuotes() {
-        final JsonValue value = new DjsParser("k: 'quoted)'").parse();
+        final JsonValue value = Json.parse("k: 'quoted)'");
         assertEquals("k: 'quoted)'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
     }
 
     @Test
     public void write_withOmitQuotes_andCommentLikeValue_doesNotOmitQuotes() {
-        final JsonValue value = new DjsParser("k: '#quoted'").parse();
+        final JsonValue value = Json.parse("k: '#quoted'");
         assertEquals("k: '#quoted'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
     }
 
     @Test
     public void write_withOmitQuotes_andValueStartingWithPunctuation_doesNotOmitQuotes() {
-        final JsonValue value = new DjsParser("k: '{quoted}'").parse();
+        final JsonValue value = Json.parse("k: '{quoted}'");
         assertEquals("k: '{quoted}'", write(value, new JsonWriterOptions().setOmitQuotes(true)));
     }
 
@@ -489,8 +489,7 @@ public final class DjsWriterTest {
 
     private static String write(final JsonValue value, final JsonWriterOptions options) {
         final StringWriter sw = new StringWriter();
-        final DjsWriter writer =
-            options != null ? new DjsWriter(sw, options) : new DjsWriter(sw, false);
+        final DjsWriter writer = new DjsWriter(sw, options);
         try {
             writer.write(value);
         } catch (final Exception e) {

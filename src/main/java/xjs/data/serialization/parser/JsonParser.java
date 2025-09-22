@@ -9,26 +9,10 @@ import xjs.data.JsonString;
 import xjs.data.JsonValue;
 import xjs.data.serialization.util.PositionTrackingReader;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 public class JsonParser implements ValueParser {
     private final PositionTrackingReader reader;
-
-    public JsonParser(final String text) {
-        this.reader = PositionTrackingReader.fromString(text);
-    }
-
-    public JsonParser(final File file) throws IOException {
-        this.reader = PositionTrackingReader.fromIs(
-            new FileInputStream(file));
-    }
-
-    public JsonParser(final File file, final int bufferSize) throws IOException {
-        this.reader = PositionTrackingReader.fromIs(
-            new FileInputStream(file), bufferSize, false);
-    }
 
     public JsonParser(final PositionTrackingReader reader) {
         this.reader = reader;

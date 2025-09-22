@@ -8,6 +8,7 @@ import xjs.data.JsonArray;
 import xjs.data.JsonObject;
 import xjs.data.JsonValue;
 import xjs.data.exception.SyntaxException;
+import xjs.data.serialization.util.PositionTrackingReader;
 import xjs.data.serialization.writer.JsonWriter;
 
 import java.io.IOException;
@@ -255,15 +256,12 @@ public final class DjsParserTest extends CommonParserTest {
 
                "finally": "value"
              }""";
-
-        final StringWriter sw = new StringWriter();
-        final JsonWriter writer = new JsonWriter(sw, true);
-        writer.write(this.parse(json));
-        assertEquals(expected.replace("\r", ""), sw.toString().replace("\r", ""));
+        final var actual = this.parse(json).toString("json");
+        assertEquals(expected.replace("\r", ""), actual.replace("\r", ""));
     }
 
     @Override
     protected JsonValue parse(final String json) {
-        return new DjsParser(json).parse();
+        return new DjsParser(PositionTrackingReader.fromString(json)).parse();
     }
 }

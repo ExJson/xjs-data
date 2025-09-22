@@ -11,6 +11,7 @@ import xjs.data.JsonCopy;
 import xjs.data.JsonValue;
 import xjs.data.exception.SyntaxException;
 import xjs.data.serialization.token.DjsTokenizer;
+import xjs.data.serialization.writer.JsonWriterOptions;
 import xjs.performance.experimental.util.ExperimentalInputStreamByteReader;
 import xjs.data.serialization.parser.JsonParser;
 import xjs.data.serialization.parser.DjsParser;
@@ -125,7 +126,7 @@ public class PerformanceTest {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public boolean containerizedIsBalanced() {
         try (final TokenStream stream =
-                 DjsTokenizer.containerize(generateNormallyDistributedSample())) {
+                 containerize(generateNormallyDistributedSample())) {
             stream.readToEnd();
             return true;
         } catch (final IOException ignored) {
@@ -150,7 +151,7 @@ public class PerformanceTest {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public JsonValue djsParsingSample() {
-        try (final DjsParser parser = new DjsParser(SIMPLE_DJS_SAMPLE)) {
+        try (final DjsParser parser = new DjsParser(PositionTrackingReader.fromString(SIMPLE_DJS_SAMPLE))) {
             return parser.parse();
         } catch (final IOException ignored) {
             throw new AssertionError("unreachable");
@@ -165,7 +166,7 @@ public class PerformanceTest {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public String djsWritingSample() {
         try (final StringWriter sw = new StringWriter();
-                final DjsWriter writer = new DjsWriter(sw, true)) {
+                final DjsWriter writer = new DjsWriter(sw, new JsonWriterOptions())) {
             writer.write(DJS_WRITING_SAMPLE);
             return sw.toString();
         } catch (final IOException ignored) {
@@ -180,7 +181,7 @@ public class PerformanceTest {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public JsonValue jsonParsingSample() {
-        try (final JsonParser parser = new JsonParser(JSON_SAMPLE)) {
+        try (final JsonParser parser = new JsonParser(PositionTrackingReader.fromString(JSON_SAMPLE))) {
             return parser.parse();
         } catch (final IOException ignored) {
             throw new AssertionError("unreachable");
@@ -195,7 +196,7 @@ public class PerformanceTest {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public String jsonWritingSample() {
         try (final StringWriter sw = new StringWriter();
-             final JsonWriter writer = new JsonWriter(sw, true)) {
+             final JsonWriter writer = new JsonWriter(sw, new JsonWriterOptions())) {
             writer.write(DJS_WRITING_SAMPLE);
             return sw.toString();
         } catch (final IOException ignored) {
@@ -322,7 +323,7 @@ public class PerformanceTest {
             while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
                 sb.append(buffer, 0, bytesRead);
             }
-            return DjsTokenizer.stream(sb.toString());
+            return stream(sb.toString());
         } catch (final IOException ignored) {
             throw new AssertionError("unreachable");
         }
@@ -337,7 +338,7 @@ public class PerformanceTest {
     public TokenStream stream_fromPositionTrackingReader() {
         try (final PositionTrackingReader reader =
                  PositionTrackingReader.fromIs(getReadingSampleIS())) {
-            return DjsTokenizer.stream(reader.readToEnd());
+            return stream(reader.readToEnd());
         } catch (final IOException ignored) {
             throw new AssertionError("unreachable");
         }
@@ -350,7 +351,7 @@ public class PerformanceTest {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public TokenStream stream_fromStreamReader() throws IOException {
-        final TokenStream stream = DjsTokenizer.stream(getReadingSampleIS());
+        final TokenStream stream = stream(getReadingSampleIS());
         stream.forEach(t -> {});
         return stream;
     }
@@ -369,7 +370,7 @@ public class PerformanceTest {
             while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
                 sb.append(buffer, 0, bytesRead);
             }
-            final TokenStream stream = DjsTokenizer.stream(sb.toString());
+            final TokenStream stream = stream(sb.toString());
             stream.forEach(t -> {});
             return stream;
         } catch (final IOException ignored) {
@@ -380,5 +381,17 @@ public class PerformanceTest {
     private static InputStream getReadingSampleIS() {
         return new ByteArrayInputStream(
             READER_INPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static TokenStream containerize(final String data) {
+        return new DjsTokenizer(PositionTrackingReader.fromString(data), true).stream();
+    }
+
+    private static TokenStream stream(final String data) {
+        return new DjsTokenizer(PositionTrackingReader.fromString(data), false).stream();
+    }
+
+    private static TokenStream stream(final InputStream data) throws IOException {
+        return new DjsTokenizer(PositionTrackingReader.fromIs(data), false).stream();
     }
 }

@@ -1,11 +1,6 @@
 package xjs.data;
 
 import org.junit.jupiter.api.Test;
-import xjs.data.Json;
-import xjs.data.JsonArray;
-import xjs.data.JsonContainer;
-import xjs.data.JsonObject;
-import xjs.data.serialization.parser.JsonParser;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -63,19 +58,19 @@ public final class JsonContainerTest {
 
     @Test
     public void contains_ignoresMetadata() throws IOException {
-        final JsonContainer container = new JsonParser("[1]").parse().asContainer();
+        final JsonContainer container = Json.parse("[1]").asContainer();
         assertTrue(container.contains(1));
     }
 
     @Test
     public void indexOf_ignoresMetadata() throws IOException {
-        final JsonContainer container = new JsonParser("[1]").parse().asContainer();
+        final JsonContainer container = Json.parse("[1]").asContainer();
         assertEquals(0, container.indexOf(Json.value(1)));
     }
 
     @Test
     public void remove_ignoresMetadata() throws IOException {
-        final JsonContainer container = new JsonParser("[1]").parse().asContainer();
+        final JsonContainer container = Json.parse("[1]").asContainer();
         assertTrue(container.remove(Json.value(1)).isEmpty());
     }
 

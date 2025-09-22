@@ -1,27 +1,15 @@
 package xjs.data.serialization.writer;
 
+import org.jetbrains.annotations.Nullable;
 import xjs.data.JsonValue;
 import xjs.data.StringType;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 
 public class DjsWriter extends CommentedElementWriter {
 
-    public DjsWriter(final File file, final boolean format) throws IOException {
-        super(file, format);
-    }
-
-    public DjsWriter(final Writer writer, final boolean format) {
-        super(writer, format);
-    }
-
-    public DjsWriter(final File file, final JsonWriterOptions options) throws IOException {
-        super(file, options);
-    }
-
-    public DjsWriter(final Writer writer, final JsonWriterOptions options) {
+    public DjsWriter(final Writer writer, final @Nullable JsonWriterOptions options) {
         super(writer, options);
     }
 

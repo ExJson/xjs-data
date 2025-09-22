@@ -5,7 +5,6 @@ import xjs.data.JsonValue;
 import xjs.data.exception.SyntaxException;
 import xjs.data.serialization.util.PositionTrackingReader;
 
-import java.io.File;
 import java.io.IOException;
 
 /**

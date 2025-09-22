@@ -1,5 +1,6 @@
 package xjs.data.serialization.writer;
 
+import org.jetbrains.annotations.Nullable;
 import xjs.data.comments.CommentData;
 import xjs.data.comments.CommentStyle;
 import xjs.data.comments.CommentType;
@@ -14,27 +15,9 @@ public abstract class CommentedElementWriter extends ElementWriter {
     protected CommentStyle forcedStyle;
 
     protected CommentedElementWriter(
-            final File file, final boolean format) throws IOException {
-        super(file, format);
-        this.outputComments = format;
-    }
-
-    protected CommentedElementWriter(
-            final Writer writer, final boolean format) {
-        super(writer, format);
-        this.outputComments = format;
-    }
-
-    protected CommentedElementWriter(
-            final File file, final JsonWriterOptions options) throws IOException {
-        super(file, options);
-        this.outputComments = options.isOutputComments();
-    }
-
-    protected CommentedElementWriter(
-            final Writer writer, final JsonWriterOptions options) {
+            final Writer writer, final @Nullable JsonWriterOptions options) {
         super(writer, options);
-        this.outputComments = options.isOutputComments();
+        this.outputComments = options != null && options.isOutputComments();
     }
 
     protected boolean hasComment(final CommentType type) {

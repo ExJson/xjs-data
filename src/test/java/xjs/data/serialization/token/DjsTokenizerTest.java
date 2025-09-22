@@ -6,6 +6,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import xjs.data.comments.CommentStyle;
 import xjs.data.StringType;
 import xjs.data.exception.SyntaxException;
+import xjs.data.serialization.util.PositionTrackingReader;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -308,20 +309,20 @@ public final class DjsTokenizerTest {
         final String reference = "{[}";
         final SyntaxException e =
             assertThrows(SyntaxException.class, () ->
-                DjsTokenizer.containerize(reference).readToEnd());
+                containerize(reference).readToEnd());
         assertTrue(e.getMessage().contains("Expected ']'"));
     }
 
     @Test
     public void stream_returnsLazilyEvaluatedTokens() {
-        final TokenStream stream = DjsTokenizer.stream("1234").preserveOutput();
+        final TokenStream stream = stream("1234").preserveOutput();
         stream.iterator().next();
         assertEquals(1, stream.source.size());
     }
     
     private static Token single(final String reference) {
         try {
-            return new DjsTokenizer(reference, false).next();
+            return new DjsTokenizer(PositionTrackingReader.fromString(reference), false).next();
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -364,8 +365,12 @@ public final class DjsTokenizerTest {
         return new TokenStream(s, e, 0, 0, s, type, List.of(tokens));
     }
 
-    private static Token containerize(final String reference) {
-        return DjsTokenizer.containerize(reference).preserveOutput().readToEnd();
+    private static TokenStream stream(final String reference) {
+        return new DjsTokenizer(PositionTrackingReader.fromString(reference), false).stream();
+    }
+
+    private static TokenStream containerize(final String reference) {
+        return new DjsTokenizer(PositionTrackingReader.fromString(reference), true).stream().preserveOutput().readToEnd();
     }
 
     private static int lines(final String reference) {

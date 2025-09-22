@@ -6,7 +6,6 @@ import xjs.data.serialization.util.PositionTrackingReader;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Basic type responsible for streaming and containerizing tokens.
@@ -40,28 +39,7 @@ public abstract class Tokenizer implements Closeable {
     protected int column;
 
     /**
-     * Begins parsing tokens when given a typically ongoing input.
-     *
-     * @param is            Any source of character bytes.
-     * @param containerized Whether to generate containers on the fly.s
-     * @throws IOException If the reader fails to parse any initial bytes.
-     */
-    public Tokenizer(final InputStream is, final boolean containerized) throws IOException {
-        this(PositionTrackingReader.fromIs(is), containerized);
-    }
-
-    /**
-     * Begins parsing tokens when given a full text as the source.
-     *
-     * @param text          The full text and source of tokens.
-     * @param containerized Whether to generate containers on the fly.
-     */
-    public Tokenizer(final String text, final boolean containerized) {
-        this(PositionTrackingReader.fromString(text), containerized);
-    }
-
-    /**
-     * Begins parsing tokens from any other source.
+     * Begins parsing tokens from any source.
      *
      * @param reader        A reader providing characters and positional data.
      * @param containerized Whether to generate containers on the fly.
@@ -69,6 +47,16 @@ public abstract class Tokenizer implements Closeable {
     public Tokenizer(final PositionTrackingReader reader, final boolean containerized) {
         this.reader = reader;
         this.containerized = containerized;
+    }
+
+    /**
+     * Generates a lazily-evaluated {@link TokenStream stream of tokens}
+     * wrapping a {@link PositionTrackingReader}.
+     *
+     * @return A new {@link TokenStream}.
+     */
+    public TokenStream stream() {
+        return new TokenStream(this, TokenType.OPEN);
     }
 
     /**
@@ -270,5 +258,22 @@ public abstract class Tokenizer implements Closeable {
     protected void updateSpan(final Token t, final int s, final int e, final int l, final int ll, final int o) {
         this.updateSpan(t, s, e, l, o);
         t.setLastLine(ll);
+    }
+
+    /**
+     * The expected constructor to be used when reading values
+     * from the disk.
+     */
+    public interface ReaderConstructor {
+
+        /**
+         * Builds a ValueParser when given a reader to read from.
+         *
+         * @param reader       The source of data being deserialized.
+         * @param containerize Whether to generate containers on the fly.
+         * @return A new {@link Tokenizer}.
+         * @throws IOException If an error occurs when opening the file.
+         */
+        Tokenizer construct(final PositionTrackingReader reader, final boolean containerize) throws IOException;
     }
 }
