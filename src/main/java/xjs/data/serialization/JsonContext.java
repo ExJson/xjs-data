@@ -17,11 +17,10 @@ import xjs.data.serialization.writer.JsonWriterOptions;
 import xjs.data.serialization.writer.WritingFunction;
 import xjs.data.serialization.writer.DjsWriter;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -210,8 +209,17 @@ public class JsonContext {
      * @param file The file being tested.
      * @return <code>true</code>, if the extension is recognized by the context.
      */
-    public static boolean isKnownFormat(final File file) {
-        final String ext = getExtension(file);
+    public static boolean isKnownFormat(final Path file) {
+        return isKnownFormat(getExtension(file));
+    }
+
+    /**
+     * Indicates whether the given file is extended with a known format or alias.
+     *
+     * @param ext The format extension, e.g. <code>json</code> or <code>djs</code>.
+     * @return <code>true</code>, if the extension is recognized by the context.
+     */
+    public static boolean isKnownFormat(final String ext) {
         return PARSERS.containsKey(ext) || ALIASES.containsKey(ext);
     }
 
@@ -222,23 +230,23 @@ public class JsonContext {
      *
      * @param file The file being parsed as some kind of JSON file or superset.
      * @return The {@link JsonValue} represented by the file.
-     * @throws IOException If the underlying {@link FileReader} throws an exception.
+     * @throws IOException If the underlying {@link Reader} throws an exception.
      * @throws SyntaxException If the contents of the file are syntactically invalid.
      */
-    public static JsonValue autoParse(final File file) throws IOException {
+    public static JsonValue autoParse(final Path file) throws IOException {
         return getParser(getExtension(file)).parse(file);
     }
 
     /**
      * Writes the given file automatically based on its extension.
      *
-     * <p>This method is the delegate of {@link JsonValue#write(File)}.
+     * <p>This method is the delegate of {@link JsonValue#write(Path)}.
      *
      * @param file  The file being written as some kind of JSON file or superset.
      * @param value The {@link JsonValue} to be represented by the file.
      * @throws IOException If the underlying {@link FileWriter} throws an exception.
      */
-    public static void autoWrite(final File file, final JsonValue value) throws IOException {
+    public static void autoWrite(final Path file, final JsonValue value) throws IOException {
         getWriter(getExtension(file)).write(file, value, defaultFormatting);
     }
 
@@ -249,7 +257,7 @@ public class JsonContext {
      *
      * @param tw    The output being written as some kind of JSON file or superset.
      * @param value The {@link JsonValue} to be represented by the file.
-     * @throws IOException If the underlying {@link FileWriter} throws an exception.
+     * @throws IOException If the underlying {@link Writer} throws an exception.
      */
     public static void autoWrite(final Writer tw, final String extension, final JsonValue value) throws IOException {
         getWriter(extension).write(tw, value, defaultFormatting);
@@ -288,7 +296,7 @@ public class JsonContext {
         return TOKENIZERS.getOrDefault(getFormat(ext), DEFAULT_TOKENIZER);
     }
 
-    private static String getFormat(final File file) {;
+    private static String getFormat(final Path file) {;
         return getFormat(getExtension(file));
     }
 
@@ -296,9 +304,10 @@ public class JsonContext {
         return ALIASES.getOrDefault(ext, ext);
     }
 
-    private static String getExtension(final File file) {
-        final int index = file.getName().lastIndexOf('.');
-        return index < 0 ? "djs" : file.getName().substring(index + 1).toLowerCase();
+    private static String getExtension(final Path file) {
+        final String filename = file.getFileName().toString();
+        final int index = filename.lastIndexOf('.');
+        return index < 0 ? "djs" : filename.substring(index + 1).toLowerCase();
     }
 
     static {

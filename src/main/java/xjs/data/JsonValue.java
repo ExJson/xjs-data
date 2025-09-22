@@ -13,6 +13,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.Writer;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 
@@ -803,7 +804,7 @@ public abstract class JsonValue implements Serializable {
      * @param file The file being written into.
      * @throws IOException If the involved {@link FileWriter} throws an exception.
      */
-    public void write(final File file) throws IOException {
+    public void write(final Path file) throws IOException {
         JsonContext.autoWrite(file, this);
     }
 

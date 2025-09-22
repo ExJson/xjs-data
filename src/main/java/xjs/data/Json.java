@@ -6,10 +6,10 @@ import xjs.data.exception.SyntaxException;
 import xjs.data.serialization.JsonContext;
 import xjs.data.transform.JsonCollectors;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -268,7 +268,7 @@ public final class Json {
      * @throws IOException If the file cannot be read.
      * @throws SyntaxException If the file is syntactically invalid.
      */
-    public static JsonValue parse(final File file) throws IOException {
+    public static JsonValue parse(final Path file) throws IOException {
         return JsonContext.autoParse(file);
     }
 
@@ -293,7 +293,6 @@ public final class Json {
     public static JsonValue parse(final String format, final String djs) {
         return JsonContext.getDefaultParser().parse(djs);
     }
-
 
     /**
      * Parses a stream of JSON, DJS, or JSONC text as bytes, returning a new value to
@@ -324,7 +323,7 @@ public final class Json {
      * @throws IOException If an IO error occurs when reading or writing the file.
      * @throws SyntaxException If the contents of the file are syntactically invalid.
      */
-    public static void view(final File file, final Consumer<JsonValue> f) throws IOException {
+    public static void view(final Path file, final Consumer<JsonValue> f) throws IOException {
         update(file, value -> { f.accept(value); return value; });
     }
 
@@ -344,7 +343,7 @@ public final class Json {
      * @throws IOException If an IO error occurs when reading or writing the file.
      * @throws SyntaxException If the contents of the file are syntactically invalid.
      */
-    public static void update(final File file, final UnaryOperator<JsonValue> f) throws IOException {
+    public static void update(final Path file, final UnaryOperator<JsonValue> f) throws IOException {
         f.apply(parse(file)).write(file);
     }
 

@@ -3,12 +3,12 @@ package xjs.data.serialization.token;
 import xjs.data.exception.SyntaxException;
 import xjs.data.serialization.util.PositionTrackingReader;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Represents an entire procedure for generating {@link TokenStream token streams}
@@ -94,8 +94,8 @@ public interface TokenizingFunction {
      * @throws IOException If the underlying {@link InputStream} throws an exception.
      * @throws SyntaxException if the file is syntactically invalid.
      */
-    default TokenStream stream(final File file) throws IOException {
-        return this.stream(new FileReader(file));
+    default TokenStream stream(final Path file) throws IOException {
+        return this.stream(Files.newBufferedReader(file));
     }
 
     /**
@@ -156,10 +156,10 @@ public interface TokenizingFunction {
      * @throws IOException If the underlying {@link InputStream} throws an exception.
      * @throws SyntaxException if the file is syntactically invalid.
      */
-    default TokenStream containerize(final File file) throws IOException {
-        return this.containerize(new FileReader(file));
+    default TokenStream containerize(final Path file) throws IOException {
+        return this.containerize(Files.newBufferedReader(file));
     }
-    
+
     /**
      * Builds a WritingFunction when given a reference to the constructor
      * of any {@link Tokenizer}.

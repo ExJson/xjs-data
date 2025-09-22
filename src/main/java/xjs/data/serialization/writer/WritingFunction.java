@@ -4,13 +4,13 @@ import org.jetbrains.annotations.Nullable;
 import xjs.data.JsonValue;
 import xjs.data.serialization.JsonContext;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Represents the entire procedure for serializing {@link JsonValue JSON values}
@@ -51,7 +51,7 @@ public interface WritingFunction {
      * @throws IOException If an exception is thrown in writing to the file.
      * @see ElementWriter#write(JsonValue)
      */
-    default void write(final File file, final JsonValue value) throws IOException {
+    default void write(final Path file, final JsonValue value) throws IOException {
         this.write(file, value, JsonContext.getDefaultFormatting());
     }
 
@@ -64,8 +64,8 @@ public interface WritingFunction {
      * @throws IOException If an exception is thrown in writing to the file.
      * @see ElementWriter#write(JsonValue)
      */
-    default void write(final File file, final JsonValue value, final @Nullable JsonWriterOptions options) throws IOException {
-        this.write(new FileWriter(file), value, options);
+    default void write(final Path file, final JsonValue value, final @Nullable JsonWriterOptions options) throws IOException {
+        this.write(Files.newBufferedWriter(file), value, options);
     }
 
     /**
