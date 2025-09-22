@@ -7,6 +7,11 @@ import xjs.data.exception.SyntaxException;
 import xjs.data.serialization.parser.JsonParser;
 import xjs.data.serialization.parser.ParsingFunction;
 import xjs.data.serialization.parser.DjsParser;
+import xjs.data.serialization.token.DjsTokenizer;
+import xjs.data.serialization.token.Token;
+import xjs.data.serialization.token.TokenStream;
+import xjs.data.serialization.token.TokenizingFunction;
+import xjs.data.serialization.util.PositionTrackingReader;
 import xjs.data.serialization.writer.JsonWriter;
 import xjs.data.serialization.writer.JsonWriterOptions;
 import xjs.data.serialization.writer.WritingFunction;
@@ -53,16 +58,18 @@ public class JsonContext {
 
     private static final Map<String, ParsingFunction> PARSERS = new ConcurrentHashMap<>();
     private static final Map<String, WritingFunction> WRITERS = new ConcurrentHashMap<>();
+    private static final Map<String, TokenizingFunction> TOKENIZERS = new ConcurrentHashMap<>();
     private static final Map<String, String> ALIASES = new ConcurrentHashMap<>();
     private static final ParsingFunction DEFAULT_PARSER = ParsingFunction.fromParser(DjsParser::new);
     private static final WritingFunction DEFAULT_WRITER = WritingFunction.fromWriter(DjsWriter::new);
+    private static final TokenizingFunction DEFAULT_TOKENIZER = TokenizingFunction.fromTokenizer(DjsTokenizer::new);
     private static volatile String eol = System.lineSeparator();
     private static volatile CommentStyle defaultCommentStyle = CommentStyle.LINE;
     private static volatile JsonWriterOptions defaultFormatting = new JsonWriterOptions();
 
     /**
      * Indicates whether the xjs-compat module is provided, enabling support for
-     * Hjson, JSON-C, YAML, and other foreign serializers.
+     * Hjson, JSONC, YAML, and other foreign serializers.
      */
     public static final boolean COMPAT_AVAILABLE;
 
@@ -79,7 +86,7 @@ public class JsonContext {
      * For this purpose, use {@link #registerAlias}.
      *
      * @param format The file extension corresponding to this parser.
-     * @param parser A function of {@link File} -> {@link JsonValue} throwing IOException
+     * @param parser A function of {@link PositionTrackingReader} -> {@link JsonValue} throwing IOException
      */
     public static void addParser(final String format, final ParsingFunction parser) {
         PARSERS.put(format.toLowerCase(), parser);
@@ -96,6 +103,19 @@ public class JsonContext {
      */
     public static void addWriter(final String format, final WritingFunction writer) {
         WRITERS.put(format.toLowerCase(), writer);
+    }
+
+    /**
+     * Adds or replaces a tokenizer for the given format.
+     *
+     * <p>Note that tokenizing functions would ideally not get reused for multiple formats.
+     * For this purpose, use {@link #registerAlias}.
+     *
+     * @param format The file extension corresponding to the parser.
+     * @param tokenizer A function of ({@link PositionTrackingReader}, boolean -> {@link TokenStream})
+     */
+    public static void addTokenizer(final String format, final TokenizingFunction tokenizer) {
+        TOKENIZERS.put(format.toLowerCase(), tokenizer);
     }
 
     /**
@@ -226,6 +246,17 @@ public class JsonContext {
      */
     public static WritingFunction getWriter(final String ext) {
         return WRITERS.getOrDefault(getFormat(ext), DEFAULT_WRITER);
+    }
+
+    /**
+     * Gets a writing function for the given format. This method provides
+     * a utility which allows the caller to output to a variety sources.
+     *
+     * @param ext The data type, with support for aliases.
+     * @return An interface used for parsing {@link Token tokens} from various sources.
+     */
+    public static TokenizingFunction getTokenizer(final String ext) {
+        return TOKENIZERS.getOrDefault(getFormat(ext), DEFAULT_TOKENIZER);
     }
 
     private static String getFormat(final File file) {;
