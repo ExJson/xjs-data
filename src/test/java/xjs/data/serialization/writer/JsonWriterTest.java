@@ -24,7 +24,7 @@ public final class JsonWriterTest {
 
     @AfterAll
     static void teardown() {
-        JsonContext.setEol(System.getProperty("line.separator"));
+        JsonContext.setEol(System.lineSeparator());
     }
 
     @Test

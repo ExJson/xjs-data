@@ -254,11 +254,12 @@ public abstract class ElementWriter implements ValueWriter {
     }
 
     protected boolean shouldSeparateOpener() {
+        final JsonContainer c = this.parent();
         return this.format
             && this.allowCondense
             && this.level > 0
-            && this.parent().size() > 1
-            && this.getFirst(this.parent()).getLinesAbove() == 0;
+            && !c.isEmpty()
+            && this.getLinesAbove(this.getFirst(c)) == 0;
     }
 
     protected boolean shouldSeparateCloser() {

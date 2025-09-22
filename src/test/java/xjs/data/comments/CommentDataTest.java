@@ -17,7 +17,7 @@ public final class CommentDataTest {
 
     @AfterAll
     static void teardown() {
-        JsonContext.setEol(System.getProperty("line.separator"));
+        JsonContext.setEol(System.lineSeparator());
     }
 
     @Test
