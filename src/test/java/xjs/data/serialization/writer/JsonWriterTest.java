@@ -199,19 +199,40 @@ public final class JsonWriterTest {
     public void parse_thenRewrite_preservesComplexFormatting() throws IOException {
         final String expected = """
             {
-              
+            
               "1":
                 1,
               "2":
-               
-                2,
+            
+                "2",
+              "z":
+            
+                "y",
             
               "a": [
                 3, 4,
-                { "5": 5, "6": 6 }
-                
-                
-              ]
+                { "5": 5, "6": 6 },
+                []
+            
+            
+            
+              ],
+            
+              "a1":
+                "block value",
+            
+              "enter": {
+                "level": {
+                  "two": [
+                    "yes",
+                    "yes"
+                  ]
+                }
+              },
+            
+              "b": "})](*&(*%#&)!",
+              "c": { "": "" },
+              "d": [ "", "", "" ]
             }""";
         assertEquals(expected, write(new JsonParser(expected).parse()));
     }
