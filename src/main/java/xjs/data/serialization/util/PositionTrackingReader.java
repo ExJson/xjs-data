@@ -681,12 +681,13 @@ public abstract class PositionTrackingReader implements Closeable {
                 output.append('\n');
                 return;
             } else if (this.current == '*') {
+                output.append((char) this.current);
                 this.read();
                 if (this.current == '/') {
                     output.setLength(lastChar);
                     return;
                 }
-                lastChar = output.length();
+                lastChar = output.length() + 1;
             } else if (!this.isWhitespace()) {
                 lastChar = output.length() + 1;
             }

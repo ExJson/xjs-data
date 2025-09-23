@@ -350,6 +350,25 @@ public final class PositionTrackingReaderTest {
     }
 
     @Test
+    public void readBlockComment_includesNonPunctuatingAsterisks_inOutput() throws IOException {
+        final String text = """
+            /**
+             * text with **asterisks**
+             */""";
+        final Sample sample = new Sample(text, NORMAL_BUFFER);
+
+        for (final PositionTrackingReader reader : sample.getAllReaders()) {
+            reader.expect('/');
+
+            final CommentToken comment = reader.readBlockComment();
+            assertEquals(CommentStyle.MULTILINE_DOC, comment.commentStyle(),
+                reader.getClass().getSimpleName());
+            assertEquals("text with **asterisks**", comment.parsed(),
+                reader.getClass().getSimpleName());
+        }
+    }
+
+    @Test
     public void readBlockComment_readsMultipleLines() throws IOException {
         final String text = "/**\n * line 1\n * line 2\n*/";
         final String expected = "line 1\nline 2";
