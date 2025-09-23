@@ -69,7 +69,9 @@ public interface ParsingFunction {
      * @see JsonParser#parse()
      */
     default JsonValue parse(final InputStream is) throws IOException {
-        return this.parse(PositionTrackingReader.fromIs(is));
+        try (final var reader = PositionTrackingReader.fromIs(is)) {
+            return this.parse(reader);
+        }
     }
 
     /**
@@ -82,7 +84,9 @@ public interface ParsingFunction {
      * @see JsonParser#parse()
      */
     default JsonValue parse(final Path file) throws IOException {
-        return this.parse(Files.newBufferedReader(file));
+        try (final var reader = Files.newBufferedReader(file)) {
+            return this.parse(reader);
+        }
     }
 
     /**
@@ -93,16 +97,6 @@ public interface ParsingFunction {
      * @return A reusable {@link WritingFunction}.
      */
     static ParsingFunction fromParser(final ValueParser.ReaderConstructor c) {
-        return reader -> {
-            final ValueParser parser = c.construct(reader);
-            final JsonValue value = parser.parse();
-
-            try {
-                parser.close();
-            } catch (final Exception e) {
-                throw new IOException(e);
-            }
-            return value;
-        };
+        return reader -> c.construct(reader).parse();
     }
 }

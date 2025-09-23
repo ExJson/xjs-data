@@ -65,7 +65,9 @@ public interface WritingFunction {
      * @see ElementWriter#write(JsonValue)
      */
     default void write(final Path file, final JsonValue value, final @Nullable JsonWriterOptions options) throws IOException {
-        this.write(Files.newBufferedWriter(file), value, options);
+        try (final var writer = Files.newBufferedWriter(file)) {
+            this.write(writer, value, options);
+        }
     }
 
     /**
@@ -90,7 +92,9 @@ public interface WritingFunction {
      * @see ElementWriter#write(JsonValue)
      */
     default void write(final OutputStream os, final JsonValue value, final @Nullable JsonWriterOptions options) throws IOException {
-        this.write(new OutputStreamWriter(os), value, options);
+        try (final var writer = new OutputStreamWriter(os)) {
+            this.write(writer, value, options);
+        }
     }
 
     /**
@@ -128,15 +132,6 @@ public interface WritingFunction {
      * @return A reusable {@link WritingFunction}.
      */
     static WritingFunction fromWriter(final ValueWriter.WriterConstructor c) {
-        return (tw, value, options) -> {
-            final ValueWriter writer = c.construct(tw, options);
-            writer.write(value);
-
-            try {
-                writer.close();
-            } catch (final Exception e) {
-                throw new IOException(e);
-            }
-        };
+        return (tw, value, options) -> c.construct(tw, options).write(value);
     }
 }
