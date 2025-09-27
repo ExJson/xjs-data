@@ -210,7 +210,7 @@ public class JsonContext {
      * @return <code>true</code>, if the extension is recognized by the context.
      */
     public static boolean isKnownFormat(final Path file) {
-        return isKnownFormat(getExtension(file));
+        return isKnownFormat(getFormat(file));
     }
 
     /**
@@ -234,7 +234,7 @@ public class JsonContext {
      * @throws SyntaxException If the contents of the file are syntactically invalid.
      */
     public static JsonValue autoParse(final Path file) throws IOException {
-        return getParser(getExtension(file)).parse(file);
+        return getParser(getFormat(file)).parse(file);
     }
 
     /**
@@ -247,7 +247,7 @@ public class JsonContext {
      * @throws IOException If the underlying {@link Writer} throws an exception.
      */
     public static void autoWrite(final Path file, final JsonValue value) throws IOException {
-        getWriter(getExtension(file)).write(file, value, defaultFormatting);
+        getWriter(getFormat(file)).write(file, value, defaultFormatting);
     }
 
     /**
@@ -296,18 +296,33 @@ public class JsonContext {
         return TOKENIZERS.getOrDefault(getFormat(ext), DEFAULT_TOKENIZER);
     }
 
-    private static String getFormat(final Path file) {;
+    /**
+     * Gets the file format from the given file, checking a list of aliases
+     * to get the original format, if applicable.
+     *
+     * @param file The {@link Path file path} being evaluated.
+     * @return The extension of the file, or the original if the extension is an alias.
+     */
+    public static String getFormat(final Path file) {;
         return getFormat(getExtension(file));
     }
 
-    private static String getFormat(final String ext) {
+    /**
+     * Normalizes the given extension and compares it against a list of aliases
+     * to find an original, if applicable.
+     *
+     * @param ext Any file extension, alias, formatted, or otherwise.
+     * @return The normalized input, or the original format if the extension is an alias.
+     */
+    public static String getFormat(String ext) {
+        ext = ext.toLowerCase();
         return ALIASES.getOrDefault(ext, ext);
     }
 
     private static String getExtension(final Path file) {
         final String filename = file.getFileName().toString();
         final int index = filename.lastIndexOf('.');
-        return index < 0 ? "djs" : filename.substring(index + 1).toLowerCase();
+        return index < 0 ? "djs" : filename.substring(index + 1);
     }
 
     static {
